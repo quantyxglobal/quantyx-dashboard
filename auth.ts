@@ -1,5 +1,6 @@
 import NextAuth, { type NextAuthConfig } from 'next-auth'
 import { authConfig } from './auth.config'
+import type { NextRequest } from 'next/server'
 
 // Lazy initialization of NextAuth
 let authInstance: ReturnType<typeof NextAuth> | null = null
@@ -56,11 +57,12 @@ export const signOut = (...args: Parameters<ReturnType<typeof NextAuth>['signOut
   return getAuthInstance().signOut(...args)
 }
 
+// Export handlers as functions that call the lazy-loaded instance
 export const handlers = {
-  get GET() {
-    return getAuthInstance().handlers.GET
+  GET: async (req: NextRequest) => {
+    return getAuthInstance().handlers.GET(req)
   },
-  get POST() {
-    return getAuthInstance().handlers.POST
+  POST: async (req: NextRequest) => {
+    return getAuthInstance().handlers.POST(req)
   },
 }
