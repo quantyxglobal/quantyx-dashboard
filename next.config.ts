@@ -9,10 +9,8 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   
-  // Disable ESLint errors during build
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // ESLint configuration removed - use CLI instead (npm run lint)
+  // This is no longer supported in Next.js 16
   
   // Skip build-time page data collection for API routes
   generateBuildId: async () => {
@@ -72,8 +70,10 @@ const nextConfig: NextConfig = {
   // Enable cache components for better performance (disabled due to dynamic route conflicts)
   // cacheComponents: true,
   
-  // Empty turbopack config to silence warnings
-  turbopack: {},
+  // Turbopack configuration with explicit root
+  turbopack: {
+    root: process.cwd(),
+  },
   
   // External packages for server components
   serverExternalPackages: ['@prisma/client', '@aws-sdk/client-s3'],

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
@@ -11,10 +11,34 @@ import { Label } from "@/components/ui/label"
 import { AlertCircle, CheckCircle, Eye, EyeOff } from "lucide-react"
 import { resetPassword } from "@/app/actions/reset-password"
 
+// Separate component for reading search params (must be wrapped in Suspense)
+function TokenReader({ onToken }: { onToken: (token: string | null) => void }) {
+  const searchParams = useSearchParams()
+  
+  useEffect(() => {
+    const tokenParam = searchParams.get('token')
+    onToken(tokenParam)
+  }, [searchParams, onToken])
+  
+  return null
+}
+
+// Loading fallback for Suspense boundary
+function TokenLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-hero">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+        <p className="mt-4 text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  )
+}
+
 export default function ResetPasswordPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [token, setToken] = useState<string | null>(null)
+  const [tokenChecked, setTokenChecked] = useState(false)
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -24,14 +48,14 @@ export default function ResetPasswordPage() {
   const [success, setSuccess] = useState(false)
   const [tokenError, setTokenError] = useState(false)
 
-  useEffect(() => {
-    const tokenParam = searchParams.get('token')
+  const handleTokenChange = (tokenParam: string | null) => {
     if (!tokenParam) {
       setTokenError(true)
     } else {
       setToken(tokenParam)
     }
-  }, [searchParams])
+    setTokenChecked(true)
+  }
 
   const validatePassword = (pwd: string) => {
     return pwd.length >= 8
@@ -74,6 +98,11 @@ export default function ResetPasswordPage() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  // Show loading while token is being checked
+  if (!tokenChecked) {
+    return <TokenLoading />
   }
 
   if (tokenError) {
@@ -168,7 +197,12 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-hero relative">
+    <>
+      <Suspense fallback={<TokenLoading />}>
+        <TokenReader onToken={handleTokenChange} />
+      </Suspense>
+      
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-hero relative">
       {/* Background decoration */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
       <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-primary/10 to-transparent rounded-full blur-3xl pointer-events-none" />
@@ -298,5 +332,6 @@ export default function ResetPasswordPage() {
         </Card>
       </div>
     </div>
+    </>
   )
 }
