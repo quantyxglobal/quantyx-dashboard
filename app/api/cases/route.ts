@@ -8,6 +8,7 @@ import { Timeline, CaseStatus } from '@prisma/client'
 
 // Configure dynamic rendering for authentication
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 // Validation schema for case creation
 const createCaseSchema = z.object({
