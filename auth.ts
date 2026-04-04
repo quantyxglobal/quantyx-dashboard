@@ -1,48 +1,66 @@
-import NextAuth from 'next-auth'
+import NextAuth, { type NextAuthConfig } from 'next-auth'
 import { authConfig } from './auth.config'
-import { getRuntimeEnvVar } from './lib/runtime-env'
 
-// Get NEXTAUTH_SECRET at runtime (not build time)
-function getNextAuthSecret(): string {
-  // Try runtime env first (for AWS Amplify Secrets)
-  const runtimeSecret = getRuntimeEnvVar('NEXTAUTH_SECRET')
-  if (runtimeSecret) {
-    console.log('[AUTH] Using runtime NEXTAUTH_SECRET')
-    return runtimeSecret
+// Lazy initialization of NextAuth
+let authInstance: ReturnType<typeof NextAuth> | null = null
+
+function getAuthInstance() {
+  if (!authInstance) {
+    // Access environment variables at runtime, not build time
+    const secret = process.env.NEXTAUTH_SECRET
+    
+    if (!secret) {
+      console.error('[AUTH] NEXTAUTH_SECRET not available at runtime')
+      throw new Error('NEXTAUTH_SECRET environment variable is required')
+    }
+    
+    console.log('[AUTH] Initializing NextAuth with secret from runtime env')
+    
+    authInstance = NextAuth({
+      ...authConfig,
+      session: {
+        strategy: 'jwt',
+        maxAge: 24 * 60 * 60, // 24 hours in seconds
+        updateAge: 60 * 60, // Update session every hour
+      },
+      cookies: {
+        sessionToken: {
+          name: `${process.env.NODE_ENV === 'production' ? '__Secure-' : ''}next-auth.session-token`,
+          options: {
+            httpOnly: true,
+            sameSite: 'lax',
+            path: '/',
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 24 * 60 * 60, // 24 hours
+          },
+        },
+      },
+      secret,
+      useSecureCookies: process.env.NODE_ENV === 'production',
+    })
   }
   
-  // Fallback to process.env (for local development)
-  const buildSecret = process.env.NEXTAUTH_SECRET
-  if (buildSecret) {
-    console.log('[AUTH] Using build-time NEXTAUTH_SECRET')
-    return buildSecret
-  }
-  
-  console.error('[AUTH] NEXTAUTH_SECRET not found in runtime or build-time env')
-  throw new Error('NEXTAUTH_SECRET environment variable is required')
+  return authInstance
 }
 
-const secret = getNextAuthSecret()
+// Export lazy-loaded auth functions
+export const auth = (...args: Parameters<ReturnType<typeof NextAuth>['auth']>) => {
+  return getAuthInstance().auth(...args)
+}
 
-export const { auth, signIn, signOut, handlers } = NextAuth({
-  ...authConfig,
-  session: {
-    strategy: 'jwt',
-    maxAge: 24 * 60 * 60, // 24 hours in seconds
-    updateAge: 60 * 60, // Update session every hour
+export const signIn = (...args: Parameters<ReturnType<typeof NextAuth>['signIn']>) => {
+  return getAuthInstance().signIn(...args)
+}
+
+export const signOut = (...args: Parameters<ReturnType<typeof NextAuth>['signOut']>) => {
+  return getAuthInstance().signOut(...args)
+}
+
+export const handlers = {
+  get GET() {
+    return getAuthInstance().handlers.GET
   },
-  cookies: {
-    sessionToken: {
-      name: `${process.env.NODE_ENV === 'production' ? '__Secure-' : ''}next-auth.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 24 * 60 * 60, // 24 hours
-      },
-    },
+  get POST() {
+    return getAuthInstance().handlers.POST
   },
-  secret,
-  useSecureCookies: process.env.NODE_ENV === 'production',
-})
+}
