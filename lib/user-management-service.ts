@@ -60,13 +60,13 @@ export const userRegistrationSchema = z.object({
   firmName: z.string().min(2, 'Firm name must be at least 2 characters').max(200, 'Firm name must be less than 200 characters')
 })
 
-export const userInvitationSchema = z.object({
+export const getUserInvitationSchema = () => z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name must be less than 100 characters'),
   email: z.string().email('Invalid email format'),
   role: z.nativeEnum(Role)
 })
 
-export const firmCreationSchema = z.object({
+export const getFirmCreationSchema = () => z.object({
   name: z.string().min(2, 'Firm name must be at least 2 characters').max(200, 'Firm name must be less than 200 characters'),
   createdByUserId: z.string().uuid().optional()
 })
