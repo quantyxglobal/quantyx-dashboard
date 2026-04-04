@@ -6,10 +6,12 @@ import { postmarkEmailService, EmailType } from './postmark-email-service'
  * Replaces Prisma-based email service with Supabase queries
  */
 export class SupabaseEmailService {
-  // Notification recipients configuration
-  private readonly notificationEmails = {
-    caseNotifications: process.env.CASE_NOTIFICATION_EMAIL || 'info@quantyxg.com',
-    accountNotifications: process.env.ACCOUNT_NOTIFICATION_EMAIL || 'support@quantyxg.com',
+  // Notification recipients configuration - accessed at runtime
+  private getNotificationEmails() {
+    return {
+      caseNotifications: process.env.CASE_NOTIFICATION_EMAIL || 'info@quantyxg.com',
+      accountNotifications: process.env.ACCOUNT_NOTIFICATION_EMAIL || 'support@quantyxg.com',
+    }
   }
 
   /**
@@ -90,7 +92,7 @@ View case: ${process.env.NEXTAUTH_URL}/admin/case/${caseData.id}
       }
 
       const result = await postmarkEmailService.sendEmail({
-        to: this.notificationEmails.caseNotifications,
+        to: this.getNotificationEmails().caseNotifications,
         subject: template.subject,
         htmlBody: template.htmlBody,
         textBody: template.textBody,
@@ -164,7 +166,7 @@ View case: ${process.env.NEXTAUTH_URL}/admin/case/${caseData.id}
       }
 
       const result = await postmarkEmailService.sendEmail({
-        to: this.notificationEmails.caseNotifications,
+        to: this.getNotificationEmails().caseNotifications,
         subject: template.subject,
         htmlBody: template.htmlBody,
         textBody: template.textBody,
@@ -233,7 +235,7 @@ View case: ${process.env.NEXTAUTH_URL}/admin/case/${caseData.id}
       }
 
       const result = await postmarkEmailService.sendEmail({
-        to: this.notificationEmails.caseNotifications,
+        to: this.getNotificationEmails().caseNotifications,
         subject: template.subject,
         htmlBody: template.htmlBody,
         textBody: template.textBody,
@@ -303,7 +305,7 @@ View case: ${process.env.NEXTAUTH_URL}/admin/case/${caseData.id}
       }
 
       const result = await postmarkEmailService.sendEmail({
-        to: this.notificationEmails.caseNotifications,
+        to: this.getNotificationEmails().caseNotifications,
         subject: template.subject,
         htmlBody: template.htmlBody,
         textBody: template.textBody,
@@ -395,7 +397,7 @@ NEXT STEPS:
       }
 
       const result = await postmarkEmailService.sendEmail({
-        to: this.notificationEmails.accountNotifications,
+        to: this.getNotificationEmails().accountNotifications,
         subject: template.subject,
         htmlBody: template.htmlBody,
         textBody: template.textBody,

@@ -8,16 +8,29 @@ import { corsHeaders, handleOptions, corsResponse } from '../cors'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-// AWS S3 Configuration
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-})
+// AWS S3 Configuration - lazy initialization
+let _s3Client: S3Client | null = null
 
-const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME!
+function getS3Client(): S3Client {
+  if (!_s3Client) {
+    _s3Client = new S3Client({
+      region: process.env.AWS_REGION,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+      },
+    })
+  }
+  return _s3Client
+}
+
+function getBucketName(): string {
+  const bucketName = process.env.AWS_S3_BUCKET_NAME
+  if (!bucketName) {
+    throw new Error('AWS_S3_BUCKET_NAME environment variable is required')
+  }
+  return bucketName
+}
 
 export async function OPTIONS(request: NextRequest) {
   return handleOptions()
@@ -47,6 +60,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate AWS configuration
+    const BUCKET_NAME = getBucketName()
     if (!BUCKET_NAME || !process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
       console.error('[WEBSITE UPLOAD] Missing AWS configuration')
       return NextResponse.json(
@@ -84,6 +98,7 @@ export async function POST(request: NextRequest) {
     })
 
     console.log('[WEBSITE UPLOAD] Uploading to S3...')
+    const s3Client = getS3Client()
     await s3Client.send(command)
     console.log('[WEBSITE UPLOAD] Upload successful')
 
@@ -92,6 +107,7 @@ export async function POST(request: NextRequest) {
       Bucket: BUCKET_NAME,
       Key: s3Key
     })
+    const s3Client = getS3Client()
     const downloadUrl = await getSignedUrl(s3Client, downloadCommand, { expiresIn: 7 * 24 * 60 * 60 })
 
     console.log('[WEBSITE UPLOAD] Generated download URL')

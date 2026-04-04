@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { SupabaseDB } from '@/lib/supabase-db'
 import bcrypt from 'bcryptjs'
 
-// Force dynamic rendering
+// Force dynamic rendering - CRITICAL for runtime env access
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
@@ -16,20 +16,23 @@ const loginSchema = z.object({
 
 // Create auth config function that accesses env vars at runtime
 function getAuthConfig(): NextAuthConfig {
-  // Access environment variables at runtime
+  // Access environment variables at runtime, not build time
   const secret = process.env.NEXTAUTH_SECRET
   const nextAuthUrl = process.env.NEXTAUTH_URL
   
-  console.log('[NEXTAUTH_ROUTE] Environment check:', {
+  console.log('[NEXTAUTH_ROUTE] Runtime environment check:', {
     hasSecret: !!secret,
     secretLength: secret?.length || 0,
-    secretValue: secret || 'EMPTY',
+    secretIsEmpty: secret === '',
     hasUrl: !!nextAuthUrl,
+    urlValue: nextAuthUrl,
     nodeEnv: process.env.NODE_ENV,
+    allEnvKeys: Object.keys(process.env).filter(k => k.includes('NEXTAUTH')).join(', ')
   })
   
+  // Check for both undefined and empty string
   if (!secret || secret === '') {
-    console.error('[NEXTAUTH_ROUTE] NEXTAUTH_SECRET is missing or empty!')
+    console.error('[NEXTAUTH_ROUTE] CRITICAL: NEXTAUTH_SECRET is missing or empty!')
     throw new Error('NEXTAUTH_SECRET environment variable is required')
   }
   
@@ -158,17 +161,33 @@ function getAuthConfig(): NextAuthConfig {
   }
 }
 
-// Initialize NextAuth inside each request handler
+// Initialize NextAuth inside each request handler - NOT at module level
 export async function GET(req: Request, ctx: any) {
   console.log('[NEXTAUTH_ROUTE] GET request received')
-  const config = getAuthConfig()
-  const handler = NextAuth(config)
-  return handler.handlers.GET(req, ctx)
+  try {
+    const config = getAuthConfig()
+    const handler = NextAuth(config)
+    return handler.handlers.GET(req, ctx)
+  } catch (error) {
+    console.error('[NEXTAUTH_ROUTE] GET handler error:', error)
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    })
+  }
 }
 
 export async function POST(req: Request, ctx: any) {
   console.log('[NEXTAUTH_ROUTE] POST request received')
-  const config = getAuthConfig()
-  const handler = NextAuth(config)
-  return handler.handlers.POST(req, ctx)
+  try {
+    const config = getAuthConfig()
+    const handler = NextAuth(config)
+    return handler.handlers.POST(req, ctx)
+  } catch (error) {
+    console.error('[NEXTAUTH_ROUTE] POST handler error:', error)
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    })
+  }
 }

@@ -2,22 +2,41 @@ import { NextRequest, NextResponse } from 'next/server'
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { randomUUID } from 'crypto'
 
-// Supabase fallback client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
+// Lazy-loaded Supabase client
+let _supabaseClient: SupabaseClient | null = null
 
-// S3 Client Configuration
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION!,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!
+function getSupabaseClient(): SupabaseClient {
+  if (!_supabaseClient) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Supabase environment variables are required')
+    }
+    
+    _supabaseClient = createClient(supabaseUrl, supabaseServiceKey)
   }
-})
+  return _supabaseClient
+}
+
+// Lazy-loaded S3 Client
+let _s3Client: S3Client | null = null
+
+function getS3Client(): S3Client {
+  if (!_s3Client) {
+    _s3Client = new S3Client({
+      region: process.env.AWS_REGION!,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!
+      }
+    })
+  }
+  return _s3Client
+}
 
 /**
  * Handles direct S3 uploads for small files with database record creation
@@ -51,8 +70,13 @@ export async function POST(request: NextRequest) {
     const fileBuffer = Buffer.from(fileData)
 
     // Upload to S3
+    const bucketName = process.env.AWS_S3_BUCKET_NAME
+    if (!bucketName) {
+      throw new Error('AWS_S3_BUCKET_NAME environment variable is required')
+    }
+    
     const command = new PutObjectCommand({
-      Bucket: process.env.AWS_S3_BUCKET_NAME!,
+      Bucket: bucketName,
       Key: s3Key,
       Body: fileBuffer,
       ContentType: mimeType || 'application/octet-stream',
@@ -64,11 +88,13 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    const s3Client = getS3Client()
     await s3Client.send(command)
     console.log(`[S3_DIRECT] File uploaded to S3 successfully`)
 
     // Create file record in database
     const fileExtension = fileName.split('.').pop()
+    const awsRegion = process.env.AWS_REGION || 'us-east-1'
     const fileRecord = {
       id: randomUUID(),
       filename: fileName,
@@ -76,9 +102,9 @@ export async function POST(request: NextRequest) {
       file_extension: fileExtension ? `.${fileExtension}` : null,
       mime_type: mimeType || 'application/octet-stream',
       file_size: fileSize,
-      s3_bucket: process.env.AWS_S3_BUCKET_NAME!,
+      s3_bucket: bucketName,
       s3_key: s3Key,
-      s3_region: process.env.AWS_REGION!,
+      s3_region: awsRegion,
       source: 'CASE_UPLOAD',
       category: 'OTHER',
       case_id: caseId,
@@ -97,6 +123,7 @@ export async function POST(request: NextRequest) {
     } catch (prismaError) {
       console.log('[S3_DIRECT] Prisma failed, using Supabase fallback:', prismaError)
       
+      const supabase = getSupabaseClient()
       const { error: fileError } = await supabase
         .from('files')
         .insert(fileRecord)

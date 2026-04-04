@@ -11,9 +11,17 @@ let _supabaseClient: SupabaseClient | null = null
 
 function getSupabaseClient(): SupabaseClient {
   if (!_supabaseClient) {
+    // Access environment variables at runtime
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Supabase environment variables are required')
+    }
+    
     _supabaseClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      supabaseUrl,
+      supabaseKey,
       {
         auth: {
           autoRefreshToken: false,

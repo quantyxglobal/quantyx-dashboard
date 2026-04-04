@@ -2,12 +2,24 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { S3Service } from '@/lib/s3-service'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
-// Supabase fallback client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
+// Lazy-loaded Supabase client
+let _supabaseClient: SupabaseClient | null = null
+
+function getSupabaseClient(): SupabaseClient {
+  if (!_supabaseClient) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Supabase environment variables are required')
+    }
+    
+    _supabaseClient = createClient(supabaseUrl, supabaseServiceKey)
+  }
+  return _supabaseClient
+}
 
 export async function GET(
   request: NextRequest,
@@ -39,6 +51,7 @@ export async function GET(
     } catch (prismaError) {
       console.log('[FILE_DOWNLOAD] Prisma failed, using Supabase fallback:', prismaError)
       
+      const supabase = getSupabaseClient()
       const { data: fileData, error: fileError } = await supabase
         .from('files')
         .select(`
