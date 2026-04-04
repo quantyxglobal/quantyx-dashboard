@@ -14,11 +14,15 @@ frontend:
         - echo "SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY" >> .env.production
         - echo "NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL" >> .env.production
         - echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY" >> .env.production
-        - echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" >> .env.production
-        - echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> .env.production
-        - echo "AWS_REGION=$AWS_REGION" >> .env.production
-        - echo "AWS_S3_BUCKET_NAME=$AWS_S3_BUCKET_NAME" >> .env.production
+        # AWS variables with AMPLIFY_ prefix
+        - echo "AWS_ACCESS_KEY_ID=$AMPLIFY_AWS_ACCESS_KEY_ID" >> .env.production
+        - echo "AWS_SECRET_ACCESS_KEY=$AMPLIFY_AWS_SECRET_ACCESS_KEY" >> .env.production
+        - echo "AWS_REGION=$AMPLIFY_AWS_REGION" >> .env.production
+        - echo "AWS_S3_BUCKET_NAME=$AMPLIFY_AWS_S3_BUCKET_NAME" >> .env.production
+        # Email variables
         - echo "POSTMARK_API_KEY=$POSTMARK_API_KEY" >> .env.production
+        - echo "CASE_NOTIFICATION_EMAIL=$CASE_NOTIFICATION_EMAIL" >> .env.production
+        - echo "ACCOUNT_NOTIFICATION_EMAIL=$ACCOUNT_NOTIFICATION_EMAIL" >> .env.production
         - npm run build
   artifacts:
     baseDirectory: .next
