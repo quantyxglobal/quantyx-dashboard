@@ -1,12 +1,16 @@
 import NextAuth from 'next-auth'
 import { authConfig } from './auth.config'
 
-// Ensure NEXTAUTH_SECRET is available
+// Get NEXTAUTH_SECRET - NextAuth will handle validation
 const secret = process.env.NEXTAUTH_SECRET
-if (!secret) {
-  console.error('[AUTH] NEXTAUTH_SECRET environment variable is not set!')
-  throw new Error('NEXTAUTH_SECRET environment variable is required')
-}
+
+// Log for debugging (will be removed in production via next.config.ts)
+console.log('[AUTH] Initializing NextAuth with secret:', secret ? 'present' : 'MISSING')
+console.log('[AUTH] Environment check:', {
+  nodeEnv: process.env.NODE_ENV,
+  hasSecret: !!secret,
+  secretLength: secret?.length || 0
+})
 
 export const { auth, signIn, signOut, handlers } = NextAuth({
   ...authConfig,
