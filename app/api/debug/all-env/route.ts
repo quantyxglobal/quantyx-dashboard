@@ -16,9 +16,13 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Only allow SUPER_ADMIN to access this endpoint
-    if (session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
+    // Allow SUPER_ADMIN and ADMIN to access this endpoint
+    const allowedRoles = ['admin', 'ADMIN', 'SUPER_ADMIN']
+    if (!allowedRoles.includes(session.user.role || '')) {
+      return NextResponse.json({ 
+        error: 'Forbidden - Admin access required',
+        yourRole: session.user.role 
+      }, { status: 403 })
     }
 
     // Helper function to check variable
