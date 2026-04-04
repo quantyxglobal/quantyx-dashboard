@@ -84,7 +84,8 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ['@prisma/client', '@aws-sdk/client-s3'],
   
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
+    // Keep console logs in production for debugging
+    removeConsole: false,
   },
   
   // Optimize images
