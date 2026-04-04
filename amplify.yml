@@ -20,9 +20,9 @@ frontend:
         - echo "AWS_REGION=$AMPLIFY_AWS_REGION" >> .env.production
         - echo "AWS_S3_BUCKET_NAME=$AMPLIFY_AWS_S3_BUCKET_NAME" >> .env.production
         # Email variables
-        - echo "POSTMARK_API_KEY=$POSTMARK_API_KEY" >> .env.production
-        - echo "CASE_NOTIFICATION_EMAIL=$CASE_NOTIFICATION_EMAIL" >> .env.production
-        - echo "ACCOUNT_NOTIFICATION_EMAIL=$ACCOUNT_NOTIFICATION_EMAIL" >> .env.production
+        - echo "POSTMARK_API_KEY=$POSTMARK_SERVER_TOKEN" >> .env.production
+        - echo "CASE_NOTIFICATION_EMAIL=$POSTMARK_ADMIN_EMAIL" >> .env.production
+        - echo "ACCOUNT_NOTIFICATION_EMAIL=$POSTMARK_SUPPORT_EMAIL" >> .env.production
         - npm run build
   artifacts:
     baseDirectory: .next
