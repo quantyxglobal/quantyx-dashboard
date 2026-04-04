@@ -924,10 +924,26 @@ Access your dashboard: ${process.env.NEXTAUTH_URL}/dashboard
   }
 }
 
-// Export singleton instance
-export const enhancedEmailService = new EnhancedEmailService({
+// Config factory to avoid accessing process.env at module level
+const getDefaultEnhancedEmailConfig = () => ({
   provider: process.env.EMAIL_PROVIDER || 'console',
   fromEmail: process.env.EMAIL_FROM || 'noreply@quantyxglobal.com',
   fromName: process.env.EMAIL_FROM_NAME || 'Quantyx Global Case Management',
   supportEmail: process.env.SUPPORT_EMAIL || 'support@quantyxg.com'
+})
+
+// Lazy-loaded singleton instance
+let _enhancedEmailServiceInstance: EnhancedEmailService | null = null
+
+export const getEnhancedEmailService = (): EnhancedEmailService => {
+  if (!_enhancedEmailServiceInstance) {
+    _enhancedEmailServiceInstance = new EnhancedEmailService(getDefaultEnhancedEmailConfig())
+  }
+  return _enhancedEmailServiceInstance
+}
+
+export const enhancedEmailService = new Proxy({} as EnhancedEmailService, {
+  get(target, prop) {
+    return getEnhancedEmailService()[prop as keyof EnhancedEmailService]
+  }
 })

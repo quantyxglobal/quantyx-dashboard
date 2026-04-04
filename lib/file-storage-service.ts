@@ -2,14 +2,21 @@ import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand } from 
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { v4 as uuidv4 } from 'uuid'
 
-// S3 Client Configuration
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION!,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!
+// Lazy-loaded S3 Client
+let _s3Client: S3Client | null = null
+
+function getS3Client(): S3Client {
+  if (!_s3Client) {
+    _s3Client = new S3Client({
+      region: process.env.AWS_REGION!,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!
+      }
+    })
   }
-})
+  return _s3Client
+}
 
 // Storage configuration
 export const DOWNLOAD_LINK_EXPIRY = 24 * 60 * 60 // 24 hours in seconds
@@ -156,7 +163,7 @@ export class FileStorageService {
         CacheControl: 'private, max-age=0'
       })
 
-      await s3Client.send(command)
+      await getS3Client().send(command)
 
       return {
         success: true,
@@ -184,7 +191,7 @@ export class FileStorageService {
         Key: s3Key
       })
 
-      const response = await s3Client.send(command)
+      const response = await getS3Client().send(command)
       
       if (!response.Metadata) {
         return null
@@ -232,7 +239,7 @@ export class FileStorageService {
       })
 
       // Generate presigned URL with 24-hour expiration
-      const url = await getSignedUrl(s3Client, command, { 
+      const url = await getSignedUrl(getS3Client(), command, { 
         expiresIn: DOWNLOAD_LINK_EXPIRY 
       })
 
@@ -268,7 +275,7 @@ export class FileStorageService {
         Key: s3Key
       })
 
-      await s3Client.send(command)
+      await getS3Client().send(command)
       return true
     } catch (error) {
       return false
@@ -395,7 +402,7 @@ export class FileStorageService {
         Prefix: prefix
       })
 
-      const response = await s3Client.send(command)
+      const response = await getS3Client().send(command)
       
       return response.Contents?.map(obj => obj.Key!).filter(key => key) || []
     } catch (error) {

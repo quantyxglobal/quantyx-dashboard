@@ -2,20 +2,28 @@
 // Handles quote requests and contact inquiries from the website
 // Uses Supabase client directly for better compatibility
 
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { AWSSESService } from './aws-ses-service'
 import { v4 as uuidv4 } from 'uuid'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
+// Lazy-loaded Supabase client
+let _supabaseClient: SupabaseClient | null = null
+
+function getSupabaseClient(): SupabaseClient {
+  if (!_supabaseClient) {
+    _supabaseClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    )
   }
-)
+  return _supabaseClient
+}
 
 export interface QuoteRequestData {
   fullName: string
@@ -65,7 +73,7 @@ export class WebsiteSubmissionService {
 
       // Create quote request in database
       const now = new Date().toISOString()
-      const { data: quoteRequest, error: quoteError } = await supabase
+      const { data: quoteRequest, error: quoteError } = await getSupabaseClient()
         .from('quote_requests')
         .insert({
           id: quoteId,
@@ -104,7 +112,7 @@ export class WebsiteSubmissionService {
           download_expires_at: file.downloadExpiresAt.toISOString(),
         }))
 
-        const { error: filesError } = await supabase
+        const { error: filesError } = await getSupabaseClient()
           .from('quote_files')
           .insert(fileRecords)
 
@@ -137,7 +145,7 @@ export class WebsiteSubmissionService {
 
       // Create contact inquiry in database
       const now = new Date().toISOString()
-      const { data: inquiry, error } = await supabase
+      const { data: inquiry, error } = await getSupabaseClient()
         .from('contact_inquiries')
         .insert({
           id: inquiryId,
@@ -180,7 +188,7 @@ export class WebsiteSubmissionService {
    * Gets all quote requests (for admin dashboard)
    */
   async getQuoteRequests(limit: number = 50, offset: number = 0) {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('quote_requests')
       .select(`
         *,
@@ -202,7 +210,7 @@ export class WebsiteSubmissionService {
    * Gets all contact inquiries (for admin dashboard)
    */
   async getContactInquiries(limit: number = 50, offset: number = 0) {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('contact_inquiries')
       .select(`
         *,
@@ -241,7 +249,7 @@ export class WebsiteSubmissionService {
     if (estimatedHours !== undefined) updateData.estimated_hours = estimatedHours
     if (notes !== undefined) updateData.internal_notes = notes
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('quote_requests')
       .update(updateData)
       .eq('id', id)
@@ -274,7 +282,7 @@ export class WebsiteSubmissionService {
     if (status === 'RESPONDED') updateData.responded_at = new Date().toISOString()
     if (notes !== undefined) updateData.internal_notes = notes
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('contact_inquiries')
       .update(updateData)
       .eq('id', id)
@@ -290,5 +298,18 @@ export class WebsiteSubmissionService {
   }
 }
 
-// Export singleton instance
-export const websiteSubmissionService = new WebsiteSubmissionService()
+// Lazy-loaded singleton instance
+let _websiteSubmissionServiceInstance: WebsiteSubmissionService | null = null
+
+export const getWebsiteSubmissionService = (): WebsiteSubmissionService => {
+  if (!_websiteSubmissionServiceInstance) {
+    _websiteSubmissionServiceInstance = new WebsiteSubmissionService()
+  }
+  return _websiteSubmissionServiceInstance
+}
+
+export const websiteSubmissionService = new Proxy({} as WebsiteSubmissionService, {
+  get(target, prop) {
+    return getWebsiteSubmissionService()[prop as keyof WebsiteSubmissionService]
+  }
+})

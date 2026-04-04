@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, handleAuthError } from '@/lib/auth-middleware'
 import { firmManagementService } from '@/lib/firm-management-service'
-import { EmailNotificationService } from '@/lib/email-notification-service'
+import { getEmailNotificationService } from '@/lib/email-notification-service'
 import { z } from 'zod'
 
 // Configure dynamic rendering for authentication
@@ -96,11 +96,7 @@ export async function POST(request: NextRequest) {
 
     // Send invitation email asynchronously for admin/super admin invitations
     try {
-      const emailService = new EmailNotificationService({
-        provider: 'console',
-        fromEmail: process.env.EMAIL_FROM || 'noreply@quantyxglobal.com',
-        fromName: 'Quantyx Global Case Management'
-      })
+      const emailService = getEmailNotificationService()
 
       if (authContext.organization) {
         await emailService.sendUserInvitation(

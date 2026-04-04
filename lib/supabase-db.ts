@@ -10,14 +10,14 @@ function generateUUID(): string {
   })
 }
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
 // Create a singleton Supabase client
 let supabaseClient: ReturnType<typeof createClient> | null = null
 
 export function getSupabaseClient() {
   if (!supabaseClient) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+    
     console.log('[SUPABASE_CLIENT] Creating new Supabase client with service role')
     supabaseClient = createClient(supabaseUrl, supabaseServiceKey, {
       auth: {

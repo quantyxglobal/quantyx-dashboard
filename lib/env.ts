@@ -45,18 +45,30 @@ export function validateEnvOrThrow() {
 /**
  * Parsed and validated environment variables
  * Use this instead of process.env for type safety
- * Returns partial env during build time to avoid build failures
+ * Lazy-loaded to avoid accessing process.env during build
  */
-export const env = (() => {
-  try {
-    return envSchema.parse(process.env)
-  } catch (error) {
-    // During build time, some env vars might not be available
-    // Return a safe partial object to prevent build failures
-    if (process.env.NODE_ENV === 'production' && !process.env.NEXTAUTH_URL) {
-      console.warn('⚠️ Environment variables not fully available during build')
-      return envSchema.partial().parse(process.env)
+let _env: z.infer<typeof envSchema> | null = null
+
+function getEnv(): z.infer<typeof envSchema> {
+  if (!_env) {
+    try {
+      _env = envSchema.parse(process.env)
+    } catch (error) {
+      // During build time, some env vars might not be available
+      // Return a safe partial object to prevent build failures
+      if (process.env.NODE_ENV === 'production' && !process.env.NEXTAUTH_URL) {
+        console.warn('⚠️ Environment variables not fully available during build')
+        _env = envSchema.partial().parse(process.env) as z.infer<typeof envSchema>
+      } else {
+        throw error
+      }
     }
-    throw error
   }
-})()
+  return _env
+}
+
+export const env = new Proxy({} as z.infer<typeof envSchema>, {
+  get(target, prop) {
+    return getEnv()[prop as keyof z.infer<typeof envSchema>]
+  }
+})

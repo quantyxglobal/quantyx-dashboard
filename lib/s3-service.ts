@@ -2,16 +2,25 @@ import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command, Hea
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { formatDateForS3 } from './date-utils'
 
-// S3 client configuration
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION!,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-})
+// Lazy-loaded S3 client
+let _s3Client: S3Client | null = null
 
-const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME!
+function getS3Client(): S3Client {
+  if (!_s3Client) {
+    _s3Client = new S3Client({
+      region: process.env.AWS_REGION!,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+      },
+    })
+  }
+  return _s3Client
+}
+
+function getBucketName(): string {
+  return process.env.AWS_S3_BUCKET_NAME!
+}
 
 export class S3Service {
   /**
@@ -35,16 +44,16 @@ export class S3Service {
       }
 
       const command = new PutObjectCommand({
-        Bucket: BUCKET_NAME,
+        Bucket: getBucketName(),
         Key: key,
         Body: body,
         ContentType: mimeType,
       })
 
-      await s3Client.send(command)
+      await getS3Client().send(command)
 
       // Return the S3 URL
-      const url = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`
+      const url = `https://${getBucketName()}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`
       
       return { url, key }
     } catch (error: any) {
@@ -54,16 +63,16 @@ export class S3Service {
         message: error.message,
         code: error.Code || error.$metadata?.httpStatusCode,
         requestId: error.$metadata?.requestId,
-        bucket: BUCKET_NAME,
+        bucket: getBucketName(),
         key: key,
         region: process.env.AWS_REGION
       })
       
       // Provide more specific error messages
       if (error.name === 'NoSuchBucket') {
-        throw new Error(`S3 bucket '${BUCKET_NAME}' does not exist`)
+        throw new Error(`S3 bucket '${getBucketName()}' does not exist`)
       } else if (error.name === 'AccessDenied' || error.Code === 'AccessDenied') {
-        throw new Error(`Access denied to S3 bucket '${BUCKET_NAME}'. Check AWS credentials and permissions.`)
+        throw new Error(`Access denied to S3 bucket '${getBucketName()}'. Check AWS credentials and permissions.`)
       } else if (error.name === 'InvalidAccessKeyId') {
         throw new Error('Invalid AWS access key ID. Check your AWS credentials.')
       } else if (error.name === 'SignatureDoesNotMatch') {
@@ -80,7 +89,7 @@ export class S3Service {
   static async getDownloadUrl(key: string, expiresIn: number = 3600): Promise<string> {
     try {
       const command = new GetObjectCommand({
-        Bucket: BUCKET_NAME,
+        Bucket: getBucketName(),
         Key: key,
       })
 
@@ -156,7 +165,7 @@ export class S3Service {
    * Generate a direct S3 URL for a file (for display purposes)
    */
   static getDirectS3Url(s3Key: string): string {
-    return `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${s3Key}`
+    return `https://${getBucketName()}.s3.${process.env.AWS_REGION}.amazonaws.com/${s3Key}`
   }
 
   /**
@@ -167,11 +176,11 @@ export class S3Service {
   static async listCaseFiles(caseIdentifier: string, prefix: string = 'cases'): Promise<string[]> {
     try {
       const command = new ListObjectsV2Command({
-        Bucket: BUCKET_NAME,
+        Bucket: getBucketName(),
         Prefix: `${prefix}/${caseIdentifier}/`,
       })
 
-      const response = await s3Client.send(command)
+      const response = await getS3Client().send(command)
       return response.Contents?.map(obj => obj.Key || '') || []
     } catch (error) {
       console.error('Error listing case files:', error)
@@ -185,11 +194,11 @@ export class S3Service {
   static async fileExists(s3Key: string): Promise<boolean> {
     try {
       const command = new HeadObjectCommand({
-        Bucket: BUCKET_NAME,
+        Bucket: getBucketName(),
         Key: s3Key,
       })
 
-      await s3Client.send(command)
+      await getS3Client().send(command)
       return true
     } catch (error) {
       return false

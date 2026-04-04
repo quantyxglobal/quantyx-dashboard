@@ -614,10 +614,23 @@ If you have any questions or need assistance, please contact our support team at
   }
 }
 
-// Export singleton instance
-export const supabaseEmailService = new SupabaseEmailService()
+// Lazy-loaded singleton instance
+let _supabaseEmailServiceInstance: SupabaseEmailService | null = null
 
-// Factory function for creating email service
+export const getSupabaseEmailService = (): SupabaseEmailService => {
+  if (!_supabaseEmailServiceInstance) {
+    _supabaseEmailServiceInstance = new SupabaseEmailService()
+  }
+  return _supabaseEmailServiceInstance
+}
+
+export const supabaseEmailService = new Proxy({} as SupabaseEmailService, {
+  get(target, prop) {
+    return getSupabaseEmailService()[prop as keyof SupabaseEmailService]
+  }
+})
+
+// Deprecated: Use getSupabaseEmailService() instead
 export function createEmailService(): SupabaseEmailService {
-  return supabaseEmailService
+  return getSupabaseEmailService()
 }

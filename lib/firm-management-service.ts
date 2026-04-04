@@ -62,17 +62,22 @@ const clientAccountSchema = z.object({
 
 export class FirmManagementService {
   private prisma: PrismaClient
-  private emailService: EmailNotificationService
+  private _emailService: EmailNotificationService | null = null
 
   constructor(prismaClient: PrismaClient = prisma) {
     this.prisma = prismaClient
-    this.emailService = new EmailNotificationService({
-      provider: 'console',
-      fromEmail: process.env.EMAIL_FROM || 'noreply@quantyxglobal.com',
-      fromName: 'Quantyx Global Case Management'
-    })
   }
 
+  private get emailService(): EmailNotificationService {
+    if (!this._emailService) {
+      this._emailService = new EmailNotificationService({
+        provider: 'console',
+        fromEmail: process.env.EMAIL_FROM || 'noreply@quantyxglobal.com',
+        fromName: 'Quantyx Global Case Management'
+      })
+    }
+    return this._emailService
+  }
   /**
    * Creates a new firm with sequential numbering and owner account
    * Validates: Requirements 6.1, 6.2, 4.1, 4.2, 4.3
@@ -445,5 +450,18 @@ Quantyx Global Case Management System
   }
 }
 
-// Export a default instance for convenience
-export const firmManagementService = new FirmManagementService()
+// Lazy-loaded singleton instance
+let _firmManagementServiceInstance: FirmManagementService | null = null
+
+export const getFirmManagementService = (): FirmManagementService => {
+  if (!_firmManagementServiceInstance) {
+    _firmManagementServiceInstance = new FirmManagementService()
+  }
+  return _firmManagementServiceInstance
+}
+
+export const firmManagementService = new Proxy({} as FirmManagementService, {
+  get(target, prop) {
+    return getFirmManagementService()[prop as keyof FirmManagementService]
+  }
+})

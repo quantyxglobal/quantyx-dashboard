@@ -237,5 +237,18 @@ export class QuoteRequestCleanupService {
   }
 }
 
-// Export singleton instance
-export const cleanupService = new QuoteRequestCleanupService();
+// Lazy-loaded singleton instance
+let _cleanupServiceInstance: QuoteRequestCleanupService | null = null
+
+export const getCleanupService = (): QuoteRequestCleanupService => {
+  if (!_cleanupServiceInstance) {
+    _cleanupServiceInstance = new QuoteRequestCleanupService()
+  }
+  return _cleanupServiceInstance
+}
+
+export const cleanupService = new Proxy({} as QuoteRequestCleanupService, {
+  get(target, prop) {
+    return getCleanupService()[prop as keyof QuoteRequestCleanupService]
+  }
+});

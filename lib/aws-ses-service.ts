@@ -170,5 +170,18 @@ export type EmailType =
   | 'security'        // Security alerts (noreply@quantyxglobal.com)
   | 'noreply'         // No-reply emails (noreply@quantyxglobal.com)
 
-// Export singleton instance
-export const awsSESService = new AWSSESService()
+// Lazy-loaded singleton instance
+let _awsSESServiceInstance: AWSSESService | null = null
+
+export const getAWSSESService = (): AWSSESService => {
+  if (!_awsSESServiceInstance) {
+    _awsSESServiceInstance = new AWSSESService()
+  }
+  return _awsSESServiceInstance
+}
+
+export const awsSESService = new Proxy({} as AWSSESService, {
+  get(target, prop) {
+    return getAWSSESService()[prop as keyof AWSSESService]
+  }
+})

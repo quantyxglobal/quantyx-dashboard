@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { CaseIdGeneratorService } from '@/lib/case-id-generator'
-import { EmailNotificationService } from '@/lib/email-notification-service'
+import { getCaseIdGeneratorService } from '@/lib/case-id-generator'
+import { getEmailNotificationService } from '@/lib/email-notification-service'
 import { requireAuth, handleAuthError } from '@/lib/auth-middleware'
 import { z } from 'zod'
 import { Timeline, CaseStatus } from '@prisma/client'
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     const validatedData = createCaseSchema.parse(body)
 
     // Generate unique case ID using organization ID
-    const caseIdGenerator = new CaseIdGeneratorService()
+    const caseIdGenerator = getCaseIdGeneratorService()
     const caseId = await caseIdGenerator.generateCaseId(authContext.user.organizationId)
 
     // Create case in transaction
@@ -84,12 +84,7 @@ export async function POST(request: NextRequest) {
 
     // Send email notifications asynchronously
     try {
-      const emailService = new EmailNotificationService({
-        provider: 'console',
-        fromEmail: process.env.EMAIL_FROM || 'noreply@quantyxglobal.com',
-        fromName: 'Quantyx Global Case Management'
-      })
-
+      const emailService = getEmailNotificationService()
       await emailService.sendCaseCreatedNotification(newCase.id)
     } catch (emailError) {
       // Log email error but don't fail the case creation

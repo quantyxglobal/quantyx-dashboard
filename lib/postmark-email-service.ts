@@ -153,5 +153,18 @@ export type EmailType =
   | 'security'        // Security alerts (noreply@quantyxg.com)
   | 'noreply'         // No-reply emails (noreply@quantyxg.com)
 
-// Export singleton instance
-export const postmarkEmailService = new PostmarkEmailService()
+// Lazy-loaded singleton instance
+let _postmarkEmailServiceInstance: PostmarkEmailService | null = null
+
+export const getPostmarkEmailService = (): PostmarkEmailService => {
+  if (!_postmarkEmailServiceInstance) {
+    _postmarkEmailServiceInstance = new PostmarkEmailService()
+  }
+  return _postmarkEmailServiceInstance
+}
+
+export const postmarkEmailService = new Proxy({} as PostmarkEmailService, {
+  get(target, prop) {
+    return getPostmarkEmailService()[prop as keyof PostmarkEmailService]
+  }
+})

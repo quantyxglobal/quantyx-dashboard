@@ -26,24 +26,31 @@ function createPrismaClient() {
   })
 }
 
-// Create or reuse Prisma client instance
-export const prisma = globalForPrisma.prisma ?? createPrismaClient()
-
-// Store in global for development hot reloading
-if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = prisma
+// Lazy-loaded Prisma client to avoid accessing process.env at module level during build
+function getPrismaClient(): PrismaClient {
+  if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = createPrismaClient()
+    
+    // Enhanced logging for development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 Development mode: Query monitoring enabled')
+    }
+  }
+  return globalForPrisma.prisma
 }
 
-// Enhanced logging for development
-if (process.env.NODE_ENV === 'development') {
-  // Simple query monitoring without event listeners
-  console.log('🔍 Development mode: Query monitoring enabled')
-}
+// Export as getter to ensure lazy initialization
+export const prisma = new Proxy({} as PrismaClient, {
+  get(target, prop) {
+    return getPrismaClient()[prop as keyof PrismaClient]
+  }
+})
 
 // Connection health check function
 export async function checkDatabaseConnection(): Promise<boolean> {
   try {
-    await prisma.$queryRaw`SELECT 1`
+    const client = getPrismaClient()
+    await client.$queryRaw`SELECT 1`
     return true
   } catch (error) {
     console.error('Database connection failed:', error)
@@ -92,8 +99,9 @@ export async function withRetry<T>(
 async function gracefulShutdown() {
   console.log('Shutting down Prisma client...')
   try {
+    const client = getPrismaClient()
     await Promise.race([
-      prisma.$disconnect(),
+      client.$disconnect(),
       new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Disconnect timeout')), 5000)
       )

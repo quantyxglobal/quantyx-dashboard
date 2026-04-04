@@ -571,5 +571,18 @@ export class UserManagementService {
   }
 }
 
-// Export a default instance for convenience
-export const userManagementService = new UserManagementService()
+// Lazy-loaded singleton instance
+let _userManagementServiceInstance: UserManagementService | null = null
+
+export const getUserManagementService = (): UserManagementService => {
+  if (!_userManagementServiceInstance) {
+    _userManagementServiceInstance = new UserManagementService()
+  }
+  return _userManagementServiceInstance
+}
+
+export const userManagementService = new Proxy({} as UserManagementService, {
+  get(target, prop) {
+    return getUserManagementService()[prop as keyof UserManagementService]
+  }
+})
