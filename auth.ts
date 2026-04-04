@@ -1,6 +1,13 @@
 import NextAuth from 'next-auth'
 import { authConfig } from './auth.config'
 
+// Ensure NEXTAUTH_SECRET is available
+const secret = process.env.NEXTAUTH_SECRET
+if (!secret) {
+  console.error('[AUTH] NEXTAUTH_SECRET environment variable is not set!')
+  throw new Error('NEXTAUTH_SECRET environment variable is required')
+}
+
 export const { auth, signIn, signOut, handlers } = NextAuth({
   ...authConfig,
   session: {
@@ -20,6 +27,6 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
       },
     },
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret,
   useSecureCookies: process.env.NODE_ENV === 'production',
 })
