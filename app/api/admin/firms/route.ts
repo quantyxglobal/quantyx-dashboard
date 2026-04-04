@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { userManagementService } from '@/lib/user-management-service'
-import { requireAdminAccess, handleAuthError } from '@/lib/auth-middleware'
 import { z } from 'zod'
 
 // Configure dynamic rendering for authentication
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
+// Lazy load services to avoid module-level initialization
+const getUserManagementService = async () => {
+  const { userManagementService } = await import('@/lib/user-management-service')
+  return userManagementService
+}
+
+const getAuthMiddleware = async () => {
+  const { requireAdminAccess, handleAuthError } = await import('@/lib/auth-middleware')
+  return { requireAdminAccess, handleAuthError }
+}
 
 // Validation schema for firm creation
 const createFirmSchema = z.object({
@@ -20,6 +30,7 @@ const createFirmSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     // Use enhanced authentication middleware - admin access required
+    const { requireAdminAccess, handleAuthError } = await getAuthMiddleware()
     const authContext = await requireAdminAccess()
 
     // Parse query parameters
@@ -149,6 +160,7 @@ export async function GET(request: NextRequest) {
 
     // Handle authentication errors
     if (error && typeof error === 'object' && 'code' in error) {
+      const { handleAuthError } = await getAuthMiddleware()
       return handleAuthError(error)
     }
 
@@ -170,6 +182,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Use enhanced authentication middleware - admin access required
+    const { requireAdminAccess, handleAuthError } = await getAuthMiddleware()
     const authContext = await requireAdminAccess()
 
     // Parse and validate request body
@@ -177,6 +190,7 @@ export async function POST(request: NextRequest) {
     const validatedData = createFirmSchema.parse(body)
 
     // Create the firm using user management service
+    const userManagementService = await getUserManagementService()
     const result = await userManagementService.createOrFindFirm({
       name: validatedData.name,
       createdByUserId: authContext.user.id
@@ -242,6 +256,7 @@ export async function POST(request: NextRequest) {
 
     // Handle authentication errors
     if (error && typeof error === 'object' && 'code' in error) {
+      const { handleAuthError } = await getAuthMiddleware()
       return handleAuthError(error)
     }
 

@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { userManagementService } from '@/lib/user-management-service'
-import { firmManagementService } from '@/lib/firm-management-service'
 import { z } from 'zod'
 
-// Configure dynamic rendering
+// Configure dynamic rendering - prevent static generation
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
+// Lazy load services to avoid module-level initialization
+const getUserManagementService = async () => {
+  const { userManagementService } = await import('@/lib/user-management-service')
+  return userManagementService
+}
+
+const getFirmManagementService = async () => {
+  const { firmManagementService } = await import('@/lib/firm-management-service')
+  return firmManagementService
+}
 
 // Validation schema for user registration
 const registrationSchema = z.object({
@@ -29,6 +39,7 @@ export async function POST(request: NextRequest) {
     // Handle self-registration (no invitation token) - Requirements 6.1, 6.2
     if (!validatedData.invitationToken) {
       // Self-registration creates new firm automatically
+      const firmManagementService = await getFirmManagementService()
       const result = await firmManagementService.createFirmWithOwner({
         firmName: validatedData.firmName,
         ownerData: {
@@ -59,6 +70,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Handle invitation-based registration
+    const userManagementService = await getUserManagementService()
     const result = await userManagementService.registerUser(
       {
         name: validatedData.name,
@@ -127,6 +139,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Validate the invitation token
+    const userManagementService = await getUserManagementService()
     const invitation = await userManagementService.validateInvitationToken(token)
 
     if (!invitation) {
