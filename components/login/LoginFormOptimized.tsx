@@ -64,14 +64,18 @@ export function LoginForm() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    console.log('[LOGIN_FORM] Form submitted - starting login process')
     setIsSubmitting(true)
     setError(null)
     
     try {
+      console.log('[LOGIN_FORM] Checking MFA status for:', formData.email)
       // Check if user has MFA enabled and needs verification
       const mfaStatus = await checkUserMFAStatus(formData.email)
+      console.log('[LOGIN_FORM] MFA status result:', mfaStatus)
       
       if (mfaStatus.error) {
+        console.log('[LOGIN_FORM] MFA status check error:', mfaStatus.error)
         setError(mfaStatus.error)
         setIsSubmitting(false)
         return
@@ -86,17 +90,19 @@ export function LoginForm() {
       }
       
       // Normal login without MFA
-      console.log('[LOGIN_FORM] Proceeding with normal login')
+      console.log('[LOGIN_FORM] Proceeding with normal login (no MFA required)')
       const formDataObj = new FormData(event.currentTarget)
       const callbackUrl = searchParams.get('callbackUrl')
       if (callbackUrl) {
         formDataObj.append('callbackUrl', callbackUrl)
       }
       
+      console.log('[LOGIN_FORM] Calling loginAction...')
       await loginAction(formDataObj)
+      console.log('[LOGIN_FORM] loginAction completed successfully')
       // If we reach here, login succeeded and redirect will happen
     } catch (error: any) {
-      console.log('[LOGIN_FORM] Error:', error)
+      console.log('[LOGIN_FORM] Caught error:', error)
       
       // Check if this is a Next.js redirect (successful login)
       if (error?.message?.includes('NEXT_REDIRECT') || error?.digest?.startsWith('NEXT_REDIRECT')) {

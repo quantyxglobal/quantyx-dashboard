@@ -14,15 +14,22 @@ const loginSchema = z.object({
 
 // Check if user has MFA enabled and needs verification (weekly check)
 export async function checkUserMFAStatus(email: string) {
+  console.log('[CHECK_MFA_STATUS] Starting check for email:', email)
   try {
+    console.log('[CHECK_MFA_STATUS] Fetching user from database...')
     const user = await SupabaseDB.getUserByEmail(email)
+    console.log('[CHECK_MFA_STATUS] User fetch result:', user ? 'Found' : 'Not found')
+    
     if (!user) {
+      console.log('[CHECK_MFA_STATUS] User not found, returning error')
       return { error: 'User not found' }
     }
     
     const mfaEnabled = (user as any).mfa_enabled || false
+    console.log('[CHECK_MFA_STATUS] MFA enabled status:', mfaEnabled)
     
     if (!mfaEnabled) {
+      console.log('[CHECK_MFA_STATUS] MFA not enabled, returning false')
       return {
         mfaEnabled: false,
         mfaRequired: false,
@@ -31,7 +38,9 @@ export async function checkUserMFAStatus(email: string) {
     }
     
     // Check if MFA verification is required (weekly)
+    console.log('[CHECK_MFA_STATUS] Checking if MFA verification required...')
     const mfaRequired = await checkMFARequired((user as any).id)
+    console.log('[CHECK_MFA_STATUS] MFA required:', mfaRequired)
     
     return {
       mfaEnabled: true,

@@ -87,18 +87,41 @@ export class SupabaseDB {
    * Get user by email with organization
    */
   static async getUserByEmail(email: string) {
-    const { data, error } = await this.client
-      .from('users')
-      .select(`
-        *,
-        organization:organizations(*)
-      `)
-      .eq('email', email)
-      .eq('is_active', true)
-      .maybeSingle()
+    console.log('[SUPABASE_DB] getUserByEmail called for:', email)
+    try {
+      const { data, error } = await this.client
+        .from('users')
+        .select(`
+          *,
+          organization:organizations(*)
+        `)
+        .eq('email', email)
+        .eq('is_active', true)
+        .maybeSingle()
 
-    if (error) throw error
-    return data
+      if (error) {
+        console.error('[SUPABASE_DB] Query error:', error)
+        throw error
+      }
+      
+      console.log('[SUPABASE_DB] Query result:', data ? 'User found' : 'No user found')
+      if (data) {
+        console.log('[SUPABASE_DB] User details:', {
+          id: data.id,
+          email: data.email,
+          role: data.role,
+          hasPasswordHash: !!data.password_hash,
+          passwordHashLength: data.password_hash?.length || 0,
+          mfaEnabled: data.mfa_enabled || false,
+          isActive: data.is_active
+        })
+      }
+      
+      return data
+    } catch (error) {
+      console.error('[SUPABASE_DB] getUserByEmail exception:', error)
+      throw error
+    }
   }
 
   /**
