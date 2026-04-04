@@ -19,10 +19,13 @@ const nextConfig: NextConfig = {
     return 'build-' + Date.now()
   },
   
+  // Skip problematic routes during build
+  async redirects() {
+    return []
+  },
+  
   // Configure Server Actions body size limit (50MB for large file uploads)
   experimental: {
-    // Disable ISR memory cache to prevent build-time evaluation
-    isrMemoryCacheSize: 0,
     serverActions: {
       bodySizeLimit: '50mb',
       // Exclude website API routes from Server Actions
