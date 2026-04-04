@@ -15,8 +15,18 @@ let supabaseClient: ReturnType<typeof createClient> | null = null
 
 export function getSupabaseClient() {
   if (!supabaseClient) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('[SUPABASE_CLIENT] Missing required environment variables:', {
+        hasUrl: !!supabaseUrl,
+        hasKey: !!supabaseServiceKey,
+        env: process.env.NODE_ENV,
+        awsEnv: process.env.AWS_EXECUTION_ENV
+      })
+      throw new Error('Supabase configuration is missing. Please check NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.')
+    }
     
     console.log('[SUPABASE_CLIENT] Creating new Supabase client with service role')
     supabaseClient = createClient(supabaseUrl, supabaseServiceKey, {

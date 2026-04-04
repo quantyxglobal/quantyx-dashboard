@@ -5,18 +5,8 @@ frontend:
       commands:
         - npm ci
         - npx prisma generate
-        # Map Amplify-safe variable names to AWS_ prefixed ones
-        - export AWS_ACCESS_KEY_ID=$AMPLIFY_AWS_ACCESS_KEY_ID
-        - export AWS_SECRET_ACCESS_KEY=$AMPLIFY_AWS_SECRET_ACCESS_KEY
-        - export AWS_REGION=$AMPLIFY_AWS_REGION
-        - export AWS_S3_BUCKET_NAME=$AMPLIFY_AWS_S3_BUCKET_NAME
     build:
       commands:
-        # Set AWS variables for build
-        - export AWS_ACCESS_KEY_ID=$AMPLIFY_AWS_ACCESS_KEY_ID
-        - export AWS_SECRET_ACCESS_KEY=$AMPLIFY_AWS_SECRET_ACCESS_KEY
-        - export AWS_REGION=$AMPLIFY_AWS_REGION
-        - export AWS_S3_BUCKET_NAME=$AMPLIFY_AWS_S3_BUCKET_NAME
         - npm run build
   artifacts:
     baseDirectory: .next
