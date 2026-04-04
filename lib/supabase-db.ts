@@ -58,7 +58,14 @@ export type FileCategory = 'MEDICAL_RECORD' | 'LEGAL_DOCUMENT' | 'IMAGE' | 'OTHE
  * Optimized Database Operations
  */
 export class SupabaseDB {
-  private static client = getSupabaseClient()
+  private static _client: ReturnType<typeof createClient> | null = null
+  
+  private static get client() {
+    if (!this._client) {
+      this._client = getSupabaseClient()
+    }
+    return this._client
+  }
 
   /**
    * Get user by email with organization
