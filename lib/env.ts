@@ -45,5 +45,18 @@ export function validateEnvOrThrow() {
 /**
  * Parsed and validated environment variables
  * Use this instead of process.env for type safety
+ * Returns partial env during build time to avoid build failures
  */
-export const env = envSchema.parse(process.env)
+export const env = (() => {
+  try {
+    return envSchema.parse(process.env)
+  } catch (error) {
+    // During build time, some env vars might not be available
+    // Return a safe partial object to prevent build failures
+    if (process.env.NODE_ENV === 'production' && !process.env.NEXTAUTH_URL) {
+      console.warn('⚠️ Environment variables not fully available during build')
+      return envSchema.partial().parse(process.env)
+    }
+    throw error
+  }
+})()
