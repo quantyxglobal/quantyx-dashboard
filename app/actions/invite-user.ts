@@ -5,7 +5,7 @@ import { SupabaseDB } from '@/lib/supabase-db'
 import { createEmailService } from '@/lib/supabase-email-service'
 import { z } from 'zod'
 
-const inviteSchema = z.object({
+const getInviteSchema = () => z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
   lastName: z.string().min(2, 'Last name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
@@ -26,7 +26,7 @@ export async function inviteUser(formData: FormData) {
 
   try {
     // Validate input
-    const data = inviteSchema.parse({
+    const data = getInviteSchema().parse({
       firstName: formData.get('firstName'),
       lastName: formData.get('lastName'),
       email: formData.get('email'),

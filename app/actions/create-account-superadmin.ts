@@ -6,7 +6,7 @@ import { supabaseEmailService } from '@/lib/supabase-email-service'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 
-const createAccountSchema = z.object({
+const getCreateAccountSchema = () => z.object({
   accountType: z.enum(['ADMIN', 'CLIENT', 'EMPLOYEE']),
   organizationId: z.string().nullable().optional(),
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
@@ -64,7 +64,7 @@ export async function createAccountBySuperAdmin(formData: FormData) {
     const rawPassword = formData.get('password')
     const passwordValue = rawPassword ? String(rawPassword) : null
     
-    const data = createAccountSchema.parse({
+    const data = getCreateAccountSchema().parse({
       accountType: formData.get('accountType'),
       organizationId: orgId,
       firstName: formData.get('firstName'),

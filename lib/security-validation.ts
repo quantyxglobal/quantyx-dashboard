@@ -130,9 +130,9 @@ export const secureString = (fieldName: string, options?: {
 }
 
 /**
- * User input validation schemas
+ * User input validation schemas (lazy-loaded to avoid module-level enum evaluation)
  */
-export const userValidationSchemas = {
+export const getUserValidationSchemas = () => ({
   // User registration/creation
   createUser: z.object({
     email: z.string().email('Invalid email format').max(255),
@@ -200,7 +200,7 @@ export const userValidationSchemas = {
     subject: secureString('subject', { maxLength: 200 }).optional(),
     message: secureString('message', { maxLength: 2000 })
   })
-}
+})
 
 /**
  * Validate request body against schema with security logging

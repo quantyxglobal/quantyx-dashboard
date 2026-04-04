@@ -10,7 +10,7 @@ import { supabaseEmailService } from '@/lib/supabase-email-service'
 import { SupabaseDB } from '@/lib/supabase-db'
 import { randomUUID } from 'crypto'
 
-const createCaseSchema = z.object({
+const getCreateCaseSchema = () => z.object({
   case_title: z.string().min(1, 'Case title is required').max(200, 'Case title must be less than 200 characters'),
   description: z.string().optional(),
   specific_instructions: z.string().optional(),
@@ -44,7 +44,7 @@ export async function createCase(formData: FormData) {
     return { success: false, error: 'Invalid services data' }
   }
 
-  const validatedFields = createCaseSchema.safeParse({
+  const validatedFields = getCreateCaseSchema().safeParse({
     case_title: formData.get('case_title'),
     description: formData.get('description'),
     specific_instructions: formData.get('specific_instructions'),

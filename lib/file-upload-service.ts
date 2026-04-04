@@ -238,8 +238,8 @@ export class FileUploadService {
   }
 }
 
-// Zod schema for enhanced file validation
-export const enhancedFileUploadSchema = z.object({
+// Lazy Zod schema for enhanced file validation to avoid module-level evaluation
+export const getEnhancedFileUploadSchema = () => z.object({
   file: z.instanceof(File)
     .refine(
       (file) => FileUploadService.isValidFileSize(file.size),
@@ -257,4 +257,4 @@ export const enhancedFileUploadSchema = z.object({
   uploadType: z.enum(['initial', 'additional']).default('initial')
 })
 
-export type EnhancedFileUploadInput = z.infer<typeof enhancedFileUploadSchema>
+export type EnhancedFileUploadInput = z.infer<ReturnType<typeof getEnhancedFileUploadSchema>>
