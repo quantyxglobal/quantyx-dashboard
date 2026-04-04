@@ -1,0 +1,759 @@
+// Quantix Global Medilegal Services - Prisma Schema
+// Supports both AWS S3 and Supabase PostgreSQL
+// Unified schema for website and dashboard applications
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum UserRole {
+  SUPER_ADMIN    // System administrator
+  ADMIN          // Firm administrator
+  CLIENT         // Client user
+  STAFF          // Internal staff member
+}
+
+enum CaseStatus {
+  PENDING        // Newly created, awaiting review
+  IN_PROGRESS    // Work in progress
+  UNDER_REVIEW   // Internal review phase
+  COMPLETED      // Work completed
+  DELIVERED      // Delivered to client
+  ARCHIVED       // Archived case
+  CANCELLED      // Cancelled case
+}
+
+enum CasePriority {
+  SUPER_RUSH     // 1-2 days
+  EXPEDITE       // 3-5 days
+  NORMAL         // 1-2 weeks
+  LOW            // 2+ weeks
+}
+
+enum FileCategory {
+  MEDICAL_RECORD     // Medical records
+  LEGAL_DOCUMENT     // Legal documents
+  CORRESPONDENCE     // Email/letters
+  REPORT             // Generated reports
+  CHRONOLOGY         // Chronology files
+  OPINION            // Medical opinions
+  HYPERLINK          // Hyperlink reports
+  DEMAND_LETTER      // Demand letters
+  OTHER              // Other files
+}
+
+enum FileSource {
+  CASE_UPLOAD        // Uploaded during case creation
+  ADDITIONAL_UPLOAD  // Additional files uploaded later
+  WEBSITE_QUOTE      // Files from website quote request
+  GENERATED_OUTPUT   // System generated files
+  EMAIL_ATTACHMENT   // Email attachments
+}
+
+enum QuoteStatus {
+  PENDING           // New quote request
+  UNDER_REVIEW      // Being reviewed by team
+  QUOTED            // Quote provided
+  ACCEPTED          // Quote accepted by client
+  REJECTED          // Quote rejected by client
+  CONVERTED         // Converted to case
+  EXPIRED           // Quote expired
+}
+
+enum ContactStatus {
+  NEW               // New inquiry
+  ASSIGNED          // Assigned to team member
+  IN_PROGRESS       // Being handled
+  RESPONDED         // Response sent
+  FOLLOW_UP         // Needs follow up
+  RESOLVED          // Inquiry resolved
+  CLOSED            // Closed inquiry
+}
+
+enum InvitationStatus {
+  PENDING           // Invitation sent
+  ACCEPTED          // Invitation accepted
+  EXPIRED           // Invitation expired
+  CANCELLED         // Invitation cancelled
+}
+
+enum AuditAction {
+  CREATE            // Record created
+  UPDATE            // Record updated
+  DELETE            // Record deleted
+  LOGIN             // User login
+  LOGOUT            // User logout
+  UPLOAD            // File upload
+  DOWNLOAD          // File download
+  STATUS_CHANGE     // Status change
+  ASSIGNMENT        // Assignment change
+  QUOTE_SENT        // Quote sent
+  CASE_CONVERTED    // Quote converted to case
+}
+
+// ============================================================================
+// CORE ENTITIES
+// ============================================================================
+
+model Organization {
+  id                String   @id @default(uuid())
+  name              String   @unique
+  display_name      String
+  slug              String   @unique
+  description       String?
+  website           String?
+  phone             String?
+  email             String?
+  address           String?
+  city              String?
+  state             String?
+  country           String   @default("India")
+  postal_code       String?
+  timezone          String   @default("Asia/Kolkata")
+  
+  // Business settings
+  case_id_prefix    String   @default("QGM")
+  case_counter      Int      @default(0)
+  
+  // Firm-specific fields for multi-tenant architecture
+  firm_number       String?  @unique // Sequential firm number (001, 002, etc.)
+  is_firm           Boolean  @default(true) // Distinguishes firms from internal orgs
+  firm_created_at   DateTime? // When firm was created
+  firm_case_counter Int      @default(0) // Firm-specific case counter
+  
+  // Billing settings
+  billing_email     String?
+  tax_id            String?
+  
+  // Feature flags
+  features          Json     @default("{}")
+  settings          Json     @default("{}")
+  
+  // Timestamps
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  
+  // Relations
+  users             User[]
+  cases             Case[]
+  services          Service[]
+  invitations       UserInvitation[]
+  audit_logs        AuditLog[]
+  
+  @@map("organizations")
+}
+
+model User {
+  id                    String              @id @default(uuid())
+  email                 String              @unique
+  email_verified        Boolean             @default(false)
+  password_hash         String?
+  
+  // Profile information
+  first_name            String
+  last_name             String
+  display_name          String?
+  avatar_url            String?
+  phone                 String?
+  title                 String?
+  department            String?
+  
+  // System fields
+  role                  UserRole            @default(CLIENT)
+  is_active             Boolean             @default(true)
+  last_login_at         DateTime?
+  login_count           Int                 @default(0)
+  
+  // Organization relationship
+  organization_id       String?
+  organization          Organization?       @relation(fields: [organization_id], references: [id], onDelete: SetNull)
+  
+  // Preferences
+  preferences           Json                @default("{}")
+  notifications         Json                @default("{}")
+  
+  // Timestamps
+  created_at            DateTime            @default(now())
+  updated_at            DateTime            @updatedAt
+  
+  // Relations
+  cases                 Case[]              @relation("CaseOwner")
+  assigned_cases        Case[]              @relation("CaseAssignee")
+  uploaded_files        File[]              @relation("FileUploader")
+  audit_logs            AuditLog[]          @relation("AuditUser")
+  admin_actions         AuditLog[]          @relation("AuditAdmin")
+  sent_invitations      UserInvitation[]    @relation("InvitationSender")
+  received_invitation   UserInvitation?     @relation("InvitationRecipient")
+  quote_assignments     QuoteRequest[]      @relation("QuoteAssignee")
+  contact_assignments   ContactInquiry[]    @relation("ContactAssignee")
+  case_comments         CaseComment[]
+  case_status_changes   CaseStatusHistory[]
+  
+  @@index([email])
+  @@index([organization_id])
+  @@index([role])
+  @@index([is_active])
+  @@index([organization_id, role]) // Composite index for firm user queries
+  @@map("users")
+}
+
+model Service {
+  id                String        @id @default(uuid())
+  name              String
+  slug              String        @unique
+  description       String?
+  category          String?
+  
+  // Pricing
+  base_price        Decimal?      @db.Decimal(10, 2)
+  price_per_page    Decimal?      @db.Decimal(10, 2)
+  price_per_hour    Decimal?      @db.Decimal(10, 2)
+  
+  // Settings
+  is_active         Boolean       @default(true)
+  requires_estimate Boolean       @default(false)
+  typical_duration  String?       // e.g., "3-5 days"
+  
+  // Organization
+  organization_id   String?
+  organization      Organization? @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  
+  // Metadata
+  metadata          Json          @default("{}")
+  
+  // Timestamps
+  created_at        DateTime      @default(now())
+  updated_at        DateTime      @updatedAt
+  
+  // Relations
+  case_services     CaseService[]
+  quote_services    QuoteService[]
+  
+  @@index([slug])
+  @@index([is_active])
+  @@index([organization_id])
+  @@map("services")
+}
+
+// ============================================================================
+// CASE MANAGEMENT
+// ============================================================================
+
+model Case {
+  id                    String              @id @default(uuid())
+  case_number           String              @unique // QGM_XXX_YYYY format
+  title                 String
+  description           String?
+  
+  // Client information
+  client_name           String
+  client_email          String
+  client_phone          String?
+  client_organization   String?
+  
+  // Case details
+  status                CaseStatus          @default(PENDING)
+  priority              CasePriority        @default(NORMAL)
+  estimated_hours       Decimal?            @db.Decimal(8, 2)
+  actual_hours          Decimal?            @db.Decimal(8, 2)
+  estimated_cost        Decimal?            @db.Decimal(10, 2)
+  final_cost            Decimal?            @db.Decimal(10, 2)
+  
+  // Dates
+  due_date              DateTime?
+  started_at            DateTime?
+  completed_at          DateTime?
+  delivered_at          DateTime?
+  
+  // Instructions
+  special_instructions  String?
+  internal_notes        String?
+  
+  // Organization relationship
+  organization_id       String
+  organization          Organization        @relation(fields: [organization_id], references: [id], onDelete: Restrict)
+  
+  // User relationships
+  owner_id              String              // Client who owns the case
+  owner                 User                @relation("CaseOwner", fields: [owner_id], references: [id], onDelete: Restrict)
+  assigned_to_id        String?             // Staff member assigned
+  assigned_to           User?               @relation("CaseAssignee", fields: [assigned_to_id], references: [id], onDelete: SetNull)
+  
+  // Source tracking
+  converted_from_quote  String?             @unique // Quote request ID if converted
+  quote_request         QuoteRequest?       @relation("ConvertedCase")
+  
+  // Metadata
+  metadata              Json                @default("{}")
+  
+  // Timestamps
+  created_at            DateTime            @default(now())
+  updated_at            DateTime            @updatedAt
+  
+  // Relations
+  services              CaseService[]
+  files                 File[]
+  comments              CaseComment[]
+  status_history        CaseStatusHistory[]
+  
+  @@index([case_number])
+  @@index([status])
+  @@index([priority])
+  @@index([organization_id])
+  @@index([owner_id])
+  @@index([assigned_to_id])
+  @@index([created_at])
+  @@index([organization_id, status]) // Composite index for dashboard queries
+  @@index([status, created_at]) // Composite index for status filtering with sorting
+  @@map("cases")
+}
+
+model CaseService {
+  id              String    @id @default(uuid())
+  case_id         String
+  service_id      String
+  
+  // Service details
+  quantity        Int       @default(1)
+  unit_price      Decimal?  @db.Decimal(10, 2)
+  total_price     Decimal?  @db.Decimal(10, 2)
+  estimated_hours Decimal?  @db.Decimal(8, 2)
+  actual_hours    Decimal?  @db.Decimal(8, 2)
+  
+  // Status
+  status          String    @default("pending") // pending, in_progress, completed
+  notes           String?
+  
+  // Timestamps
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+  
+  // Relations
+  case            Case      @relation(fields: [case_id], references: [id], onDelete: Cascade)
+  service         Service   @relation(fields: [service_id], references: [id], onDelete: Restrict)
+  
+  @@unique([case_id, service_id])
+  @@index([case_id])
+  @@index([service_id])
+  @@map("case_services")
+}
+
+model CaseComment {
+  id              String    @id @default(uuid())
+  case_id         String
+  user_id         String
+  
+  // Content
+  content         String
+  is_internal     Boolean   @default(false) // Internal notes vs client-visible
+  
+  // Metadata
+  metadata        Json      @default("{}")
+  
+  // Timestamps
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+  
+  // Relations
+  case            Case      @relation(fields: [case_id], references: [id], onDelete: Cascade)
+  user            User      @relation(fields: [user_id], references: [id], onDelete: Restrict)
+  
+  @@index([case_id])
+  @@index([user_id])
+  @@index([created_at])
+  @@map("case_comments")
+}
+
+model CaseStatusHistory {
+  id              String      @id @default(uuid())
+  case_id         String
+  
+  // Status change
+  from_status     CaseStatus?
+  to_status       CaseStatus
+  reason          String?
+  
+  // User who made the change
+  changed_by_id   String
+  changed_by      User        @relation(fields: [changed_by_id], references: [id], onDelete: Restrict)
+  
+  // Timestamp
+  changed_at      DateTime    @default(now())
+  
+  // Relations
+  case            Case        @relation(fields: [case_id], references: [id], onDelete: Cascade)
+  
+  @@index([case_id])
+  @@index([changed_at])
+  @@map("case_status_history")
+}
+
+// ============================================================================
+// FILE MANAGEMENT (AWS S3 + Supabase)
+// ============================================================================
+
+model File {
+  id                    String        @id @default(uuid())
+  
+  // File identification
+  filename              String        // Display filename
+  original_filename     String        // Original uploaded filename
+  file_extension        String?       // .pdf, .docx, etc.
+  mime_type             String
+  file_size             BigInt        // Size in bytes
+  
+  // Storage information (AWS S3)
+  s3_bucket             String        @default("quantyx-global")
+  s3_key                String        @unique // S3 object key
+  s3_region             String        @default("ap-south-2")
+  s3_version_id         String?       // S3 version ID if versioning enabled
+  
+  // File categorization
+  category              FileCategory  @default(OTHER)
+  source                FileSource    @default(CASE_UPLOAD)
+  
+  // Case relationship (optional - files can exist without cases)
+  case_id               String?
+  case                  Case?         @relation(fields: [case_id], references: [id], onDelete: Cascade)
+  
+  // Upload information
+  uploaded_by_id        String
+  uploaded_by           User          @relation("FileUploader", fields: [uploaded_by_id], references: [id], onDelete: Restrict)
+  
+  // Processing status
+  is_processed          Boolean       @default(false)
+  processing_status     String?       // scanning, processed, error
+  processing_error      String?
+  
+  // Security
+  is_encrypted          Boolean       @default(false)
+  encryption_key_id     String?       // KMS key ID if encrypted
+  
+  // Access control
+  is_public             Boolean       @default(false)
+  access_permissions    Json          @default("{}")
+  
+  // Download tracking
+  download_count        Int           @default(0)
+  last_downloaded_at    DateTime?
+  
+  // Metadata
+  metadata              Json          @default("{}")
+  tags                  String[]      @default([])
+  
+  // Timestamps
+  created_at            DateTime      @default(now())
+  updated_at            DateTime      @updatedAt
+  
+  @@index([case_id])
+  @@index([uploaded_by_id])
+  @@index([category])
+  @@index([source])
+  @@index([s3_key])
+  @@index([created_at])
+  @@index([case_id, created_at]) // Composite index for case file queries with sorting
+  @@map("files")
+}
+
+// ============================================================================
+// WEBSITE INTEGRATION
+// ============================================================================
+
+model QuoteRequest {
+  id                    String            @id @default(uuid())
+  
+  // Contact information
+  full_name             String
+  email                 String
+  phone                 String
+  organization_name     String?
+  
+  // Request details
+  case_description      String?
+  special_requirements  String?
+  estimated_pages       Int?
+  preferred_timeline    String?           // "rush", "normal", "flexible"
+  
+  // Status and assignment
+  status                QuoteStatus       @default(PENDING)
+  assigned_to_id        String?
+  assigned_to           User?             @relation("QuoteAssignee", fields: [assigned_to_id], references: [id], onDelete: SetNull)
+  
+  // Quote information
+  estimated_cost        Decimal?          @db.Decimal(10, 2)
+  estimated_hours       Decimal?          @db.Decimal(8, 2)
+  quote_valid_until     DateTime?
+  quoted_at             DateTime?
+  
+  // Conversion tracking
+  converted_case_id     String?           @unique
+  converted_case        Case?             @relation("ConvertedCase", fields: [converted_case_id], references: [id], onDelete: SetNull)
+  converted_at          DateTime?
+  
+  // Communication
+  internal_notes        String?
+  client_notes          String?
+  
+  // Source tracking
+  source                String            @default("website") // website, referral, phone, etc.
+  utm_source            String?
+  utm_medium            String?
+  utm_campaign          String?
+  
+  // Metadata
+  metadata              Json              @default("{}")
+  
+  // Timestamps
+  created_at            DateTime          @default(now())
+  updated_at            DateTime          @updatedAt
+  
+  // Relations
+  services              QuoteService[]
+  files                 QuoteFile[]
+  
+  @@index([email])
+  @@index([status])
+  @@index([assigned_to_id])
+  @@index([created_at])
+  @@map("quote_requests")
+}
+
+model QuoteService {
+  id                String       @id @default(uuid())
+  quote_request_id  String
+  service_id        String
+  
+  // Service details
+  quantity          Int          @default(1)
+  estimated_cost    Decimal?     @db.Decimal(10, 2)
+  notes             String?
+  
+  // Timestamps
+  created_at        DateTime     @default(now())
+  
+  // Relations
+  quote_request     QuoteRequest @relation(fields: [quote_request_id], references: [id], onDelete: Cascade)
+  service           Service      @relation(fields: [service_id], references: [id], onDelete: Restrict)
+  
+  @@unique([quote_request_id, service_id])
+  @@index([quote_request_id])
+  @@index([service_id])
+  @@map("quote_services")
+}
+
+model QuoteFile {
+  id                    String       @id @default(uuid())
+  quote_request_id      String
+  
+  // File information
+  filename              String
+  original_filename     String
+  file_size             BigInt
+  mime_type             String
+  
+  // Storage (AWS S3)
+  s3_bucket             String       @default("quantyx-global")
+  s3_key                String       @unique
+  s3_region             String       @default("ap-south-2")
+  
+  // Download information
+  download_url          String?      // Pre-signed URL
+  download_expires_at   DateTime?    // When pre-signed URL expires
+  
+  // Metadata
+  metadata              Json         @default("{}")
+  
+  // Timestamps
+  created_at            DateTime     @default(now())
+  
+  // Relations
+  quote_request         QuoteRequest @relation(fields: [quote_request_id], references: [id], onDelete: Cascade)
+  
+  @@index([quote_request_id])
+  @@index([s3_key])
+  @@map("quote_files")
+}
+
+model ContactInquiry {
+  id                String        @id @default(uuid())
+  
+  // Contact information
+  first_name        String
+  last_name         String
+  email             String
+  phone             String?
+  organization_name String?
+  
+  // Inquiry details
+  subject           String?
+  message           String
+  services_interest String[]      @default([]) // Services they're interested in
+  
+  // Status and assignment
+  status            ContactStatus @default(NEW)
+  assigned_to_id    String?
+  assigned_to       User?         @relation("ContactAssignee", fields: [assigned_to_id], references: [id], onDelete: SetNull)
+  
+  // Response tracking
+  responded_at      DateTime?
+  response_method   String?       // email, phone, meeting
+  
+  // Source tracking
+  source            String        @default("website") // website, referral, phone, etc.
+  utm_source        String?
+  utm_medium        String?
+  utm_campaign      String?
+  
+  // Notes
+  internal_notes    String?
+  
+  // Metadata
+  metadata          Json          @default("{}")
+  
+  // Timestamps
+  created_at        DateTime      @default(now())
+  updated_at        DateTime      @updatedAt
+  
+  @@index([email])
+  @@index([status])
+  @@index([assigned_to_id])
+  @@index([created_at])
+  @@map("contact_inquiries")
+}
+
+// ============================================================================
+// USER MANAGEMENT
+// ============================================================================
+
+model UserInvitation {
+  id                String            @id @default(uuid())
+  
+  // Invitation details
+  email             String
+  first_name        String
+  last_name         String
+  role              UserRole          @default(CLIENT)
+  
+  // Organization
+  organization_id   String
+  organization      Organization      @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  
+  // Invitation management
+  invited_by_id     String
+  invited_by        User              @relation("InvitationSender", fields: [invited_by_id], references: [id], onDelete: Restrict)
+  
+  // Status
+  status            InvitationStatus  @default(PENDING)
+  token             String            @unique
+  expires_at        DateTime
+  
+  // Acceptance tracking
+  accepted_at       DateTime?
+  accepted_user_id  String?           @unique
+  accepted_user     User?             @relation("InvitationRecipient", fields: [accepted_user_id], references: [id], onDelete: SetNull)
+  
+  // Metadata
+  message           String?
+  metadata          Json              @default("{}")
+  
+  // Timestamps
+  created_at        DateTime          @default(now())
+  updated_at        DateTime          @updatedAt
+  
+  @@unique([email, organization_id])
+  @@index([token])
+  @@index([expires_at])
+  @@index([status])
+  @@map("user_invitations")
+}
+
+// ============================================================================
+// AUDIT & LOGGING
+// ============================================================================
+
+model AuditLog {
+  id                String        @id @default(uuid())
+  
+  // Action details
+  action            AuditAction
+  entity_type       String        // User, Case, File, etc.
+  entity_id         String        // ID of the affected entity
+  
+  // User information
+  user_id           String?       // User who performed the action
+  user              User?         @relation("AuditUser", fields: [user_id], references: [id], onDelete: SetNull)
+  
+  // Admin action (if performed by admin on behalf of user)
+  admin_id          String?
+  admin             User?         @relation("AuditAdmin", fields: [admin_id], references: [id], onDelete: SetNull)
+  
+  // Organization context
+  organization_id   String?
+  organization      Organization? @relation(fields: [organization_id], references: [id], onDelete: SetNull)
+  
+  // Change details
+  old_values        Json?         // Previous values (for updates)
+  new_values        Json?         // New values (for creates/updates)
+  
+  // Context
+  description       String?       // Human-readable description
+  ip_address        String?       // Client IP address
+  user_agent        String?       // Client user agent
+  
+  // Metadata
+  metadata          Json          @default("{}")
+  
+  // Timestamp
+  created_at        DateTime      @default(now())
+  
+  @@index([user_id])
+  @@index([admin_id])
+  @@index([organization_id])
+  @@index([action])
+  @@index([entity_type])
+  @@index([created_at])
+  @@map("audit_logs")
+}
+
+// ============================================================================
+// SYSTEM CONFIGURATION
+// ============================================================================
+
+model SystemSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       Json
+  description String?
+  is_public   Boolean  @default(false) // Whether setting is visible to clients
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  @@index([key])
+  @@map("system_settings")
+}
+
+model EmailTemplate {
+  id            String   @id @default(uuid())
+  name          String   @unique
+  subject       String
+  html_content  String
+  text_content  String?
+  variables     Json     @default("[]") // Array of variable names
+  is_active     Boolean  @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  
+  @@index([name])
+  @@index([is_active])
+  @@map("email_templates")
+}
