@@ -8,8 +8,8 @@ import bcrypt from 'bcryptjs'
 // Configure dynamic rendering for authentication
 export const dynamic = 'force-dynamic'
 
-// Validation schema for user updates
-const userUpdateSchema = z.object({
+// Lazy schema to avoid Prisma enum evaluation at module level
+const getUserUpdateSchema = () => z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name must be less than 100 characters').optional(),
   email: z.string().email('Invalid email format').optional(),
   role: z.nativeEnum(UserRole).optional(),
@@ -34,7 +34,7 @@ export async function PUT(
 
     // Parse and validate request body
     const body = await request.json()
-    const validatedData = userUpdateSchema.parse(body)
+    const validatedData = getUserUpdateSchema().parse(body)
 
     // Get existing user
     const existingUser = await prisma.user.findUnique({

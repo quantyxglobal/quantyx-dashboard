@@ -10,8 +10,8 @@ import { Timeline, CaseStatus } from '@prisma/client'
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-// Validation schema for case creation
-const createCaseSchema = z.object({
+// Lazy schema to avoid Prisma enum evaluation at module level
+const getCreateCaseSchema = () => z.object({
   case_title: z.string().min(1, 'Case title is required').max(200, 'Case title must be less than 200 characters'),
   description: z.string().optional(),
   specific_instructions: z.string().optional(),
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
 
     // Parse and validate request body
     const body = await request.json()
-    const validatedData = createCaseSchema.parse(body)
+    const validatedData = getCreateCaseSchema().parse(body)
 
     // Generate unique case ID using organization ID
     const caseIdGenerator = getCaseIdGeneratorService()

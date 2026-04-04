@@ -8,8 +8,8 @@ import { z } from 'zod'
 // Configure dynamic rendering for authentication
 export const dynamic = 'force-dynamic'
 
-// Validation schema for upload initiation
-const uploadInitiationSchema = z.object({
+// Lazy schema to avoid enum evaluation at module level
+const getUploadInitiationSchema = () => z.object({
   fileName: z.string().min(1, 'File name is required'),
   fileSize: z.number().min(1, 'File size must be greater than 0'),
   mimeType: z.string().min(1, 'MIME type is required'),
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     // Parse and validate request body
     const body = await request.json()
-    const validatedData = uploadInitiationSchema.parse(body)
+    const validatedData = getUploadInitiationSchema().parse(body)
 
     // Validate case access
     const hasAccess = await userManagementService.validateFirmAccess(session.user.id, validatedData.caseId)

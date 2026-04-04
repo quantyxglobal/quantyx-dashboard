@@ -9,8 +9,8 @@ import bcrypt from 'bcryptjs'
 // Configure dynamic rendering for authentication
 export const dynamic = 'force-dynamic'
 
-// Validation schema for admin user creation
-const adminUserCreationSchema = z.object({
+// Lazy schema to avoid Prisma enum evaluation at module level
+const getAdminUserCreationSchema = () => z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name must be less than 100 characters'),
   email: z.string().email('Invalid email format'),
   password: z.string().min(8, 'Password must be at least 8 characters').max(128, 'Password must be less than 128 characters'),
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     // Parse and validate request body
     const body = await request.json()
-    const validatedData = adminUserCreationSchema.parse(body)
+    const validatedData = getAdminUserCreationSchema().parse(body)
 
     // Validate role-based creation permissions
     const canCreate = await validateRoleBasedCreation(

@@ -72,16 +72,8 @@ const nextConfig: NextConfig = {
   // Enable cache components for better performance (disabled due to dynamic route conflicts)
   // cacheComponents: true,
   
-  // Set turbopack root to silence workspace warning
-  turbopack: {
-    root: __dirname,
-    rules: {
-      '*.svg': {
-        loaders: ['@svgr/webpack'],
-        as: '*.js',
-      },
-    },
-  },
+  // Empty turbopack config to silence warnings
+  turbopack: {},
   
   // External packages for server components
   serverExternalPackages: ['@prisma/client', '@aws-sdk/client-s3'],
@@ -109,31 +101,31 @@ const nextConfig: NextConfig = {
   // },
   
   // Enable static optimization where possible
-  output: 'standalone',
+  // output: 'standalone', // Disabled - causes API route pre-rendering issues
   
-  // Webpack optimizations
-  webpack: (config, { dev, isServer }) => {
-    if (!dev && !isServer) {
-      // Optimize bundle splitting
-      config.optimization.splitChunks = {
-        chunks: 'all',
-        cacheGroups: {
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: 'all',
-          },
-          common: {
-            name: 'common',
-            minChunks: 2,
-            chunks: 'all',
-            enforce: true,
-          },
-        },
-      };
-    }
-    return config;
-  },
+  // Webpack optimizations disabled - using Turbopack in Next.js 16
+  // webpack: (config, { dev, isServer }) => {
+  //   if (!dev && !isServer) {
+  //     // Optimize bundle splitting
+  //     config.optimization.splitChunks = {
+  //       chunks: 'all',
+  //       cacheGroups: {
+  //         vendor: {
+  //           test: /[\\/]node_modules[\\/]/,
+  //           name: 'vendors',
+  //           chunks: 'all',
+  //         },
+  //         common: {
+  //           name: 'common',
+  //           minChunks: 2,
+  //           chunks: 'all',
+  //           enforce: true,
+  //         },
+  //       },
+  //     };
+  //   }
+  //   return config;
+  // },
 };
 
 export default nextConfig;
