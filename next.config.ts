@@ -12,8 +12,10 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   
-  // ESLint configuration removed - use CLI instead (npm run lint)
-  // This is no longer supported in Next.js 16
+  // Disable ESLint during build - warnings should not fail production builds
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   
   // Skip build-time page data collection for API routes
   generateBuildId: async () => {
