@@ -4,8 +4,21 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  // Only allow in development or with a secret key
-  const debugKey = process.env.DEBUG_KEY
+  // Log all environment variables to CloudWatch
+  console.log('=== FULL ENVIRONMENT VARIABLES ===')
+  console.log(JSON.stringify(process.env, null, 2))
+  console.log('=== END ENVIRONMENT VARIABLES ===')
+  
+  // Get all env var keys
+  const allEnvKeys = Object.keys(process.env).sort()
+  
+  // Filter for our specific variables
+  const ourVars = allEnvKeys.filter(key => 
+    key.includes('NEXTAUTH') || 
+    key.includes('DATABASE') || 
+    key.includes('SUPABASE') ||
+    key.includes('AWS')
+  )
   
   return NextResponse.json({
     nodeEnv: process.env.NODE_ENV,
@@ -20,5 +33,11 @@ export async function GET() {
     awsRegion: process.env.AWS_REGION || 'not-set',
     // Show first 10 chars of NEXTAUTH_SECRET for debugging (safe)
     nextAuthSecretPreview: process.env.NEXTAUTH_SECRET?.substring(0, 10) + '...' || 'MISSING',
+    // Show all environment variable keys
+    allEnvKeys: allEnvKeys,
+    // Show our specific variable keys
+    ourVariableKeys: ourVars,
+    // Show count
+    totalEnvVars: allEnvKeys.length,
   })
 }
