@@ -91,7 +91,13 @@ export function LoginForm() {
       
       // Normal login without MFA
       console.log('[LOGIN_FORM] Proceeding with normal login (no MFA required)')
-      const formDataObj = new FormData(event.currentTarget)
+      
+      // Create FormData from the form element
+      const form = event.currentTarget
+      const formDataObj = new FormData()
+      formDataObj.append('email', formData.email)
+      formDataObj.append('password', formData.password)
+      
       const callbackUrl = searchParams.get('callbackUrl')
       if (callbackUrl) {
         formDataObj.append('callbackUrl', callbackUrl)
