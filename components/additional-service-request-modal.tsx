@@ -61,11 +61,17 @@ export function AdditionalServiceRequestModal({
               'life-care-plan',
               'medical-opinion',
               'medical-expenses',
+              'deposition-transcript',
+              'med-a-word',
+              'pressure-ulcer-matrix',
+              'pain-medication-chart',
+              'medical-illustration',
+              'graphical-timeline',
+              'comparison-chart',
+              'case-facts-opinion',
               'hyperlinks',
               'bookmarks',
-              'med-a-word',
-              'deposition-prep',
-              'lcp-support'
+              'mass-tort-review'
             ]
             
             // Sort services by custom order

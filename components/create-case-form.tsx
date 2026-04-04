@@ -59,7 +59,7 @@ export function CreateCaseForm({ user }: CreateCaseFormProps) {
           const data = await response.json()
           console.log('[CREATE_CASE_FORM] Loaded services from API:', data.services)
           
-          // Define custom service order
+          // Define custom service order matching the new services list
           const serviceOrder = [
             'medical-chronology',
             'narrative-summary',
@@ -67,11 +67,17 @@ export function CreateCaseForm({ user }: CreateCaseFormProps) {
             'life-care-plan',
             'medical-opinion',
             'medical-expenses',
+            'deposition-transcript',
+            'med-a-word',
+            'pressure-ulcer-matrix',
+            'pain-medication-chart',
+            'medical-illustration',
+            'graphical-timeline',
+            'comparison-chart',
+            'case-facts-opinion',
             'hyperlinks',
             'bookmarks',
-            'med-a-word',
-            'deposition-prep',
-            'lcp-support'
+            'mass-tort-review'
           ]
           
           // Sort services by custom order
@@ -105,11 +111,17 @@ export function CreateCaseForm({ user }: CreateCaseFormProps) {
           { id: "life-care-plan", name: "Life Care Plan" },
           { id: "medical-opinion", name: "Medical Opinion" },
           { id: "medical-expenses", name: "Medical Expenses Summary" },
+          { id: "deposition-transcript", name: "Deposition Transcript" },
+          { id: "med-a-word", name: "Med-A-Word" },
+          { id: "pressure-ulcer-matrix", name: "Pressure Ulcer Matrix" },
+          { id: "pain-medication-chart", name: "Pain and Suffering and Pain Medication Chart" },
+          { id: "medical-illustration", name: "Medical Illustration" },
+          { id: "graphical-timeline", name: "Graphical Timeline Summary" },
+          { id: "comparison-chart", name: "Comparison Chart" },
+          { id: "case-facts-opinion", name: "Case Facts & Opinion" },
           { id: "hyperlinks", name: "Hyperlinks" },
           { id: "bookmarks", name: "Bookmarks" },
-          { id: "med-a-word", name: "Med-A-Word" },
-          { id: "deposition-prep", name: "Deposition Preparation" },
-          { id: "lcp-support", name: "Life Care Plans (LCP) Support" },
+          { id: "mass-tort-review", name: "Mass-Tort Case Review" },
         ])
       } finally {
         setIsLoadingServices(false)
