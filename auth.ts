@@ -10,12 +10,18 @@ function getAuthInstance() {
     // Access environment variables at runtime, not build time
     const secret = process.env.NEXTAUTH_SECRET
     
-    if (!secret) {
-      console.error('[AUTH] NEXTAUTH_SECRET not available at runtime')
+    // Check for both undefined and empty string
+    if (!secret || secret === '') {
+      console.error('[AUTH] NEXTAUTH_SECRET not available at runtime:', {
+        type: typeof secret,
+        value: secret,
+        length: secret?.length,
+        allEnvKeys: Object.keys(process.env).filter(k => k.includes('NEXTAUTH'))
+      })
       throw new Error('NEXTAUTH_SECRET environment variable is required')
     }
     
-    console.log('[AUTH] Initializing NextAuth with secret from runtime env')
+    console.log('[AUTH] Initializing NextAuth with secret from runtime env (length:', secret.length, ')')
     
     authInstance = NextAuth({
       ...authConfig,
