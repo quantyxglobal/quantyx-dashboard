@@ -54,10 +54,10 @@ function getEnv(): z.infer<typeof envSchema> {
     try {
       _env = envSchema.parse(process.env)
     } catch (error) {
-      // During build time, some env vars might not be available
-      // Return a safe partial object to prevent build failures
-      if (process.env.NODE_ENV === 'production' && !process.env.NEXTAUTH_URL) {
-        console.warn('⚠️ Environment variables not fully available during build')
+      // During build time or Lambda cold start, some env vars might not be available
+      // Return a safe partial object to prevent failures
+      if (process.env.NODE_ENV === 'production' || process.env.AWS_EXECUTION_ENV) {
+        console.warn('⚠️ Environment variables not fully available, using partial validation')
         _env = envSchema.partial().parse(process.env) as z.infer<typeof envSchema>
       } else {
         throw error
@@ -69,6 +69,13 @@ function getEnv(): z.infer<typeof envSchema> {
 
 export const env = new Proxy({} as z.infer<typeof envSchema>, {
   get(target, prop) {
-    return getEnv()[prop as keyof z.infer<typeof envSchema>]
+    try {
+      const envVars = getEnv()
+      return envVars[prop as keyof z.infer<typeof envSchema>]
+    } catch (error) {
+      // Fallback to process.env if getEnv() fails
+      console.warn(`⚠️ Failed to get env.${String(prop)}, falling back to process.env`)
+      return process.env[prop as string]
+    }
   }
 })
