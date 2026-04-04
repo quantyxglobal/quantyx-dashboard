@@ -71,5 +71,20 @@ export class CaseIdGeneratorService {
   }
 }
 
-// Export a default instance for convenience
-export const caseIdGeneratorService = new CaseIdGeneratorService()
+// Lazy-loaded singleton instance
+let _caseIdGeneratorServiceInstance: CaseIdGeneratorService | null = null
+
+// Export a default instance getter for convenience
+export const getCaseIdGeneratorService = (): CaseIdGeneratorService => {
+  if (!_caseIdGeneratorServiceInstance) {
+    _caseIdGeneratorServiceInstance = new CaseIdGeneratorService()
+  }
+  return _caseIdGeneratorServiceInstance
+}
+
+// For backward compatibility - lazy getter
+export const caseIdGeneratorService = new Proxy({} as CaseIdGeneratorService, {
+  get(target, prop) {
+    return getCaseIdGeneratorService()[prop as keyof CaseIdGeneratorService]
+  }
+})

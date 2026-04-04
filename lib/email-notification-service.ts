@@ -864,13 +864,28 @@ This is an automated notification.
   }
 }
 
-// Default configuration for development
-const defaultConfig: EmailServiceConfig = {
+// Default configuration factory (lazy-loaded to avoid build-time errors)
+const getDefaultConfig = (): EmailServiceConfig => ({
   provider: 'console',
   fromEmail: process.env.EMAIL_FROM || 'noreply@quantyxglobal.com',
   fromName: 'Quantyx Global Case Management',
   replyToEmail: process.env.EMAIL_REPLY_TO || 'support@quantyxglobal.com'
+})
+
+// Lazy-loaded singleton instance
+let _emailNotificationServiceInstance: EmailNotificationService | null = null
+
+// Export a default instance getter for convenience
+export const getEmailNotificationService = (): EmailNotificationService => {
+  if (!_emailNotificationServiceInstance) {
+    _emailNotificationServiceInstance = new EmailNotificationService(getDefaultConfig())
+  }
+  return _emailNotificationServiceInstance
 }
 
-// Export a default instance for convenience
-export const emailNotificationService = new EmailNotificationService(defaultConfig)
+// For backward compatibility - lazy getter
+export const emailNotificationService = new Proxy({} as EmailNotificationService, {
+  get(target, prop) {
+    return getEmailNotificationService()[prop as keyof EmailNotificationService]
+  }
+})
