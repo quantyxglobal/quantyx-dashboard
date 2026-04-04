@@ -107,7 +107,6 @@ export async function POST(request: NextRequest) {
       Bucket: BUCKET_NAME,
       Key: s3Key
     })
-    const s3Client = getS3Client()
     const downloadUrl = await getSignedUrl(s3Client, downloadCommand, { expiresIn: 7 * 24 * 60 * 60 })
 
     console.log('[WEBSITE UPLOAD] Generated download URL')
