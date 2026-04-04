@@ -9,6 +9,10 @@ import {
   type UserRole 
 } from '@/lib/role-redirect'
 
+// Force middleware to run in Node.js runtime where all env vars are available
+// Edge runtime in AWS Amplify doesn't have access to non-NEXT_PUBLIC_ variables
+export const runtime = 'nodejs'
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
