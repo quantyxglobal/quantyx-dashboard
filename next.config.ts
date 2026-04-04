@@ -22,6 +22,15 @@ const nextConfig: NextConfig = {
     return []
   },
   
+  // CRITICAL: Tell Next.js to include these server-side environment variables
+  // Without this, Next.js strips them out during build
+  serverRuntimeConfig: {
+    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+    DATABASE_URL: process.env.DATABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  },
+  
   // Configure Server Actions body size limit (50MB for large file uploads)
   experimental: {
     serverActions: {
