@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // CRITICAL: Use standalone output for proper environment variable handling in AWS Lambda
+  output: 'standalone',
+  
   // React Compiler disabled for now - uncomment when babel-plugin-react-compiler is installed
   // reactCompiler: true,
   
@@ -20,15 +23,6 @@ const nextConfig: NextConfig = {
   // Skip problematic routes during build
   async redirects() {
     return []
-  },
-  
-  // CRITICAL: Tell Next.js to include these server-side environment variables
-  // Without this, Next.js strips them out during build
-  serverRuntimeConfig: {
-    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
-    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
-    DATABASE_URL: process.env.DATABASE_URL,
-    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   },
   
   // Configure Server Actions body size limit (50MB for large file uploads)
@@ -108,9 +102,6 @@ const nextConfig: NextConfig = {
   //     },
   //   },
   // },
-  
-  // Enable static optimization where possible
-  // output: 'standalone', // Disabled - causes API route pre-rendering issues
   
   // Webpack optimizations disabled - using Turbopack in Next.js 16
   // webpack: (config, { dev, isServer }) => {
