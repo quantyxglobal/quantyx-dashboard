@@ -11,8 +11,11 @@ const nextConfig: NextConfig = {
     AWS_SECRET_ACCESS_KEY: process.env.AMPLIFY_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || '',
     CUSTOM_AWS_REGION: process.env.AMPLIFY_AWS_REGION || process.env.CUSTOM_AWS_REGION || process.env.AWS_REGION || '',
     AWS_S3_BUCKET_NAME: process.env.AMPLIFY_AWS_S3_BUCKET_NAME || process.env.AWS_S3_BUCKET_NAME || '',
-    // Email Configuration
+    // Email Configuration - Postmark
+    POSTMARK_SERVER_TOKEN: process.env.POSTMARK_SERVER_TOKEN || '',
     POSTMARK_API_KEY: process.env.POSTMARK_SERVER_TOKEN || process.env.POSTMARK_API_KEY || '',
+    POSTMARK_ADMIN_EMAIL: process.env.POSTMARK_ADMIN_EMAIL || '',
+    POSTMARK_SUPPORT_EMAIL: process.env.POSTMARK_SUPPORT_EMAIL || '',
     CASE_NOTIFICATION_EMAIL: process.env.POSTMARK_ADMIN_EMAIL || process.env.CASE_NOTIFICATION_EMAIL || '',
     ACCOUNT_NOTIFICATION_EMAIL: process.env.POSTMARK_SUPPORT_EMAIL || process.env.ACCOUNT_NOTIFICATION_EMAIL || '',
   },
