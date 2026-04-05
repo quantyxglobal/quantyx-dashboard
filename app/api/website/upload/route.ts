@@ -13,12 +13,19 @@ let _s3Client: S3Client | null = null
 
 function getS3Client(): S3Client {
   if (!_s3Client) {
-    // Use CUSTOM_AWS_REGION for S3 operations (bucket is in ap-south-2)
-    const s3Region = process.env.CUSTOM_AWS_REGION || process.env.AWS_REGION
-    console.log('[WEBSITE UPLOAD] Initializing S3 client with region:', s3Region)
+    // Use CUSTOM_AWS_REGION first (set in next.config.ts from AMPLIFY_AWS_REGION)
+    // Fall back to AMPLIFY_AWS_REGION, then AWS_REGION
+    const region = process.env.CUSTOM_AWS_REGION || process.env.AMPLIFY_AWS_REGION || process.env.AWS_REGION!
+    
+    console.log('[WEBSITE UPLOAD] Initializing S3 client with region:', region)
+    console.log('[WEBSITE UPLOAD] Available regions:', {
+      CUSTOM_AWS_REGION: process.env.CUSTOM_AWS_REGION,
+      AMPLIFY_AWS_REGION: process.env.AMPLIFY_AWS_REGION,
+      AWS_REGION: process.env.AWS_REGION
+    })
     
     _s3Client = new S3Client({
-      region: s3Region,
+      region,
       credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
@@ -119,6 +126,10 @@ export async function POST(request: NextRequest) {
     const downloadUrl = await getSignedUrl(s3Client, downloadCommand, { expiresIn: 7 * 24 * 60 * 60 })
 
     console.log('[WEBSITE UPLOAD] Generated download URL')
+
+    // Use correct region for response
+    const region = process.env.CUSTOM_AWS_REGION || process.env.AMPLIFY_AWS_REGION || process.env.AWS_REGION!
+    console.log('[WEBSITE UPLOAD] Using region for response:', region)
 
     return NextResponse.json({
       success: true,
