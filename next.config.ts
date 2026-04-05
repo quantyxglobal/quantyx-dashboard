@@ -64,20 +64,10 @@ const nextConfig: NextConfig = {
     // optimizeCss: true,
   },
   
-  // CORS configuration for API routes
+  // CORS configuration removed - handled at route level in lib/cors.ts
+  // This allows dynamic origin matching instead of hardcoded values
   async headers() {
     return [
-      {
-        source: '/api/:path*',
-        headers: [
-          { key: 'Access-Control-Allow-Origin', value: 'http://localhost:8080' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PUT, DELETE, OPTIONS' },
-          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
-          { key: 'Access-Control-Allow-Credentials', value: 'true' },
-          // Add caching headers for better performance
-          { key: 'Cache-Control', value: 'public, max-age=300, s-maxage=300' },
-        ],
-      },
       // Cache static assets aggressively
       {
         source: '/_next/static/:path*',
