@@ -1,4 +1,5 @@
 import { websiteSubmissionService } from '@/lib/website-submission-service'
+import { postmarkEmailService } from '@/lib/postmark-email-service'
 import { z } from 'zod'
 import { getCorsHeaders } from '@/lib/cors'
 
@@ -76,6 +77,106 @@ export async function POST(req: Request) {
           }
         }
       )
+    }
+
+    // Send email notifications
+    try {
+      console.log('[QUOTE API] Sending email notifications...')
+      
+      // Email to admin/support team
+      const fileList = validatedData.uploadedFiles.map(file => 
+        `- ${file.originalName} (${(file.size / 1024 / 1024).toFixed(2)} MB)`
+      ).join('\n')
+      
+      const adminEmailHtml = `
+        <h2>New Quote Request Received</h2>
+        <p><strong>From:</strong> ${validatedData.fullName}</p>
+        <p><strong>Email:</strong> ${validatedData.email}</p>
+        <p><strong>Phone:</strong> ${validatedData.phone}</p>
+        <p><strong>Firm:</strong> ${validatedData.firmName || 'Not provided'}</p>
+        <p><strong>Services:</strong> ${validatedData.services.join(', ')}</p>
+        ${validatedData.caseDetails ? `<p><strong>Case Details:</strong><br>${validatedData.caseDetails.replace(/\n/g, '<br>')}</p>` : ''}
+        <p><strong>Files Uploaded:</strong> ${validatedData.uploadedFiles.length}</p>
+        <p>Quote Request ID: ${result.id}</p>
+      `
+      
+      const adminEmailText = `
+New Quote Request Received
+
+From: ${validatedData.fullName}
+Email: ${validatedData.email}
+Phone: ${validatedData.phone}
+Firm: ${validatedData.firmName || 'Not provided'}
+Services: ${validatedData.services.join(', ')}
+${validatedData.caseDetails ? `Case Details:\n${validatedData.caseDetails}\n` : ''}
+Files Uploaded: ${validatedData.uploadedFiles.length}
+
+Quote Request ID: ${result.id}
+      `
+      
+      await postmarkEmailService.sendEmail({
+        to: process.env.POSTMARK_SUPPORT_EMAIL || 'support@quantyxg.com',
+        subject: `New Quote Request from ${validatedData.fullName}`,
+        htmlBody: adminEmailHtml,
+        textBody: adminEmailText,
+        emailType: 'support',
+        replyTo: validatedData.email
+      })
+      
+      // Confirmation email to user
+      const userEmailHtml = `
+        <h2>Quote Request Received</h2>
+        <p>Dear ${validatedData.fullName},</p>
+        <p>Thank you for your quote request. We have received your documents and will review them carefully.</p>
+        <h3>What happens next?</h3>
+        <ul>
+          <li>Our medical-legal experts will review your documents within 24-48 hours</li>
+          <li>We will prepare a detailed quotation based on your specific requirements</li>
+          <li>You will receive the quote via email along with project timeline information</li>
+        </ul>
+        <p><strong>Your submission summary:</strong></p>
+        <ul>
+          <li>Services Requested: ${validatedData.services.join(', ')}</li>
+          <li>Documents Uploaded: ${validatedData.uploadedFiles.length} files</li>
+        </ul>
+        <p>If you have any questions, please contact us at ${process.env.POSTMARK_SUPPORT_EMAIL || 'support@quantyxg.com'}</p>
+        <p>Best regards,<br>The Quantix Global Team</p>
+      `
+      
+      const userEmailText = `
+Quote Request Received
+
+Dear ${validatedData.fullName},
+
+Thank you for your quote request. We have received your documents and will review them carefully.
+
+What happens next:
+- Our medical-legal experts will review your documents within 24-48 hours
+- We will prepare a detailed quotation based on your specific requirements
+- You will receive the quote via email along with project timeline information
+
+Your submission summary:
+- Services Requested: ${validatedData.services.join(', ')}
+- Documents Uploaded: ${validatedData.uploadedFiles.length} files
+
+If you have any questions, please contact us at ${process.env.POSTMARK_SUPPORT_EMAIL || 'support@quantyxg.com'}
+
+Best regards,
+The Quantix Global Team
+      `
+      
+      await postmarkEmailService.sendEmail({
+        to: validatedData.email,
+        subject: 'Quote Request Received - Quantix Global',
+        htmlBody: userEmailHtml,
+        textBody: userEmailText,
+        emailType: 'support'
+      })
+      
+      console.log('[QUOTE API] Email notifications sent successfully')
+    } catch (emailError) {
+      console.error('[QUOTE API] Email sending failed:', emailError)
+      // Don't fail the request if email fails
     }
 
     return new Response(
