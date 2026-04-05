@@ -223,7 +223,7 @@ export async function canAccessFile(
   if (error || !file) return false
   
   // Admin and Employee can access all files
-  if (userRole === 'admin' || userRole === 'employee') return true
+  if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' || userRole === 'EMPLOYEE') return true
   
   // Client can only access files from their own firm's cases
   const { data: userData } = await supabase

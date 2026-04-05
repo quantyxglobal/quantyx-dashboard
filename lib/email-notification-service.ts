@@ -486,7 +486,7 @@ This is an automated message.
       recipients.push({
         email: user.email,
         name: user.name,
-        role: user.role === 'admin' ? 'admin' : 'client'
+        role: (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') ? 'admin' : 'client'
       })
     }
 

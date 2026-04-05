@@ -29,8 +29,9 @@ export function ResetPasswordModal({ userId, userName, userRole }: ResetPassword
   const [passwordStrength, setPasswordStrength] = useState<'weak' | 'medium' | 'strong'>('weak')
   const [showStrength, setShowStrength] = useState(false)
   
-  // Requirement 4.1: Disable for admin users
-  if (userRole === 'admin') {
+  // Only SUPER_ADMIN can reset passwords
+  // This button should only be shown to SUPER_ADMIN users
+  if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' || userRole === 'EMPLOYEE') {
     return (
       <Button variant="outline" size="sm" disabled>
         <KeyRound className="h-4 w-4 mr-2" />
