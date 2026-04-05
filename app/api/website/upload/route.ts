@@ -13,8 +13,12 @@ let _s3Client: S3Client | null = null
 
 function getS3Client(): S3Client {
   if (!_s3Client) {
+    // Use CUSTOM_AWS_REGION for S3 operations (bucket is in ap-south-2)
+    const s3Region = process.env.CUSTOM_AWS_REGION || process.env.AWS_REGION
+    console.log('[WEBSITE UPLOAD] Initializing S3 client with region:', s3Region)
+    
     _s3Client = new S3Client({
-      region: process.env.AWS_REGION,
+      region: s3Region,
       credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
