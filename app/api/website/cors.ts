@@ -10,13 +10,19 @@ const allowedOrigins = [
 ]
 
 export function getCorsHeaders(origin: string | null) {
-  const allowedOrigin = origin && allowedOrigins.includes(origin) ? origin : allowedOrigins[0]
+  // For website API routes, be more permissive
+  // If origin is in allowed list, use it; otherwise use wildcard
+  const allowedOrigin = origin && allowedOrigins.includes(origin) ? origin : '*'
+  
+  console.log('[CORS] Request origin:', origin)
+  console.log('[CORS] Allowed origin:', allowedOrigin)
+  console.log('[CORS] Is in allowed list:', origin ? allowedOrigins.includes(origin) : false)
   
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Allow-Credentials': allowedOrigin === '*' ? 'false' : 'true',
     'Access-Control-Max-Age': '86400', // 24 hours
   }
 }
