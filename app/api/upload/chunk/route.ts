@@ -6,12 +6,13 @@ import { auth } from '@/auth'
 const getS3Config = () => {
   const accessKeyId = process.env.AMPLIFY_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID
   const secretAccessKey = process.env.AMPLIFY_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY
-  const region = process.env.AMPLIFY_AWS_REGION || process.env.AWS_REGION
+  const region = process.env.CUSTOM_AWS_REGION || process.env.AMPLIFY_AWS_REGION || process.env.AWS_REGION
   
   console.log('[CHUNK_UPLOAD] S3 Config check:', {
     hasAccessKey: !!accessKeyId,
     hasSecretKey: !!secretAccessKey,
     region: region,
+    usingCustomRegion: !!process.env.CUSTOM_AWS_REGION,
     usingAmplifyPrefix: !!(process.env.AMPLIFY_AWS_ACCESS_KEY_ID)
   })
   

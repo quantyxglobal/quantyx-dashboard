@@ -17,7 +17,7 @@ frontend:
         # AWS variables with AMPLIFY_ prefix
         - echo "AWS_ACCESS_KEY_ID=$AMPLIFY_AWS_ACCESS_KEY_ID" >> .env.production
         - echo "AWS_SECRET_ACCESS_KEY=$AMPLIFY_AWS_SECRET_ACCESS_KEY" >> .env.production
-        - echo "AWS_REGION=$AMPLIFY_AWS_REGION" >> .env.production
+        - echo "CUSTOM_AWS_REGION=$AMPLIFY_AWS_REGION" >> .env.production
         - echo "AWS_S3_BUCKET_NAME=$AMPLIFY_AWS_S3_BUCKET_NAME" >> .env.production
         # Email variables
         - echo "POSTMARK_API_KEY=$POSTMARK_SERVER_TOKEN" >> .env.production
