@@ -15,6 +15,13 @@ const loginSchema = z.object({
 // Check if user has MFA enabled and needs verification (weekly check)
 export async function checkUserMFAStatus(email: string) {
   console.log('[CHECK_MFA_STATUS] Starting check for email:', email)
+  
+  // Validate email input
+  if (!email || typeof email !== 'string') {
+    console.error('[CHECK_MFA_STATUS] Invalid email provided:', email)
+    return { error: 'Invalid email address' }
+  }
+  
   try {
     console.log('[CHECK_MFA_STATUS] Fetching user from database...')
     const user = await SupabaseDB.getUserByEmail(email)

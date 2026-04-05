@@ -74,6 +74,14 @@ export function LoginForm() {
       const mfaStatus = await checkUserMFAStatus(formData.email)
       console.log('[LOGIN_FORM] MFA status result:', mfaStatus)
       
+      // Handle undefined or null response
+      if (!mfaStatus) {
+        console.error('[LOGIN_FORM] MFA status check returned undefined/null')
+        setError('Unable to verify account status. Please try again.')
+        setIsSubmitting(false)
+        return
+      }
+      
       if (mfaStatus.error) {
         console.log('[LOGIN_FORM] MFA status check error:', mfaStatus.error)
         setError(mfaStatus.error)
