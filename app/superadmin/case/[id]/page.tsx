@@ -25,7 +25,7 @@ export default async function SuperAdminCaseDetailPage({
   }
 
   // Verify super admin role
-  if (session.user.role !== 'admin') {
+  if (session.user.role !== 'SUPER_ADMIN') {
     return notFound()
   }
 

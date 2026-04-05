@@ -97,7 +97,7 @@ async function SuperAdminLayoutContent({
       </main>
       
       {/* Route Preloader */}
-      <RoutePreloader userRole="admin" />
+      <RoutePreloader userRole="SUPER_ADMIN" />
       
       {/* Footer */}
       <footer className="relative z-10 border-t border-destructive/20 bg-card/50 backdrop-blur-sm mt-16">
