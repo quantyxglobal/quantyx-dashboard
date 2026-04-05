@@ -99,7 +99,7 @@ export class S3Service {
         Key: key,
       })
 
-      const url = await getSignedUrl(s3Client, command, { expiresIn })
+      const url = await getSignedUrl(getS3Client(), command, { expiresIn })
       return url
     } catch (error) {
       console.error('Error generating presigned URL:', error)
