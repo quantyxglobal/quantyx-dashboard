@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { websiteSubmissionService } from '@/lib/website-submission-service'
 import { z } from 'zod'
-import { corsHeaders, handleOptions, corsResponse } from '../cors'
+import { getCorsHeaders } from '../cors'
 
 // Validation schema for quote form
 const quoteFormSchema = z.object({
@@ -21,11 +21,16 @@ const quoteFormSchema = z.object({
 })
 
 export async function OPTIONS(request: NextRequest) {
-  return handleOptions()
+  const origin = request.headers.get('origin')
+  const headers = getCorsHeaders(origin)
+  return new NextResponse(null, { status: 204, headers })
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const origin = request.headers.get('origin')
+    const dynamicCorsHeaders = getCorsHeaders(origin)
+    
     const body = await request.json()
     
     // Validate input
@@ -56,32 +61,35 @@ export async function POST(request: NextRequest) {
     )
     
     if (!result.success) {
-      return corsResponse(
+      return NextResponse.json(
         { error: result.error || 'Failed to submit quote request' },
-        500
+        { status: 500, headers: dynamicCorsHeaders }
       )
     }
 
-    return corsResponse({
+    return NextResponse.json({
       success: true,
       message: 'Quote request submitted successfully',
       quoteRequestId: result.id,
       filesUploaded: validatedData.uploadedFiles.length
-    })
+    }, { status: 200, headers: dynamicCorsHeaders })
 
   } catch (error) {
+    const origin = request.headers.get('origin')
+    const dynamicCorsHeaders = getCorsHeaders(origin)
+    
     console.error('Quote form API error:', error)
     
     if (error instanceof z.ZodError) {
-      return corsResponse(
+      return NextResponse.json(
         { error: 'Invalid form data', details: error.errors },
-        400
+        { status: 400, headers: dynamicCorsHeaders }
       )
     }
 
-    return corsResponse(
+    return NextResponse.json(
       { error: 'Internal server error' },
-      500
+      { status: 500, headers: dynamicCorsHeaders }
     )
   }
 }

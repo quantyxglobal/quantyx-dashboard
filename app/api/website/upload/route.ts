@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { v4 as uuidv4 } from 'uuid'
-import { corsHeaders, handleOptions, corsResponse } from '../cors'
+import { getCorsHeaders } from '../cors'
 
 // Force this route to be treated as an Edge API Route, not a Server Action
 export const runtime = 'nodejs'
@@ -33,14 +33,19 @@ function getBucketName(): string {
 }
 
 export async function OPTIONS(request: NextRequest) {
-  return handleOptions()
+  const origin = request.headers.get('origin')
+  const headers = getCorsHeaders(origin)
+  return new NextResponse(null, { status: 204, headers })
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const origin = request.headers.get('origin')
+    const dynamicCorsHeaders = getCorsHeaders(origin)
+    
     console.log('[WEBSITE UPLOAD] Starting file upload...')
     console.log('[WEBSITE UPLOAD] Request headers:', {
-      origin: request.headers.get('origin'),
+      origin: origin,
       host: request.headers.get('host'),
       contentType: request.headers.get('content-type')
     })
@@ -55,7 +60,7 @@ export async function POST(request: NextRequest) {
       console.error('[WEBSITE UPLOAD] No file provided')
       return NextResponse.json(
         { error: 'No file provided' },
-        { status: 400, headers: corsHeaders }
+        { status: 400, headers: dynamicCorsHeaders }
       )
     }
 
@@ -65,7 +70,7 @@ export async function POST(request: NextRequest) {
       console.error('[WEBSITE UPLOAD] Missing AWS configuration')
       return NextResponse.json(
         { error: 'Server configuration error: Missing AWS credentials' },
-        { status: 500, headers: corsHeaders }
+        { status: 500, headers: dynamicCorsHeaders }
       )
     }
 
@@ -120,10 +125,13 @@ export async function POST(request: NextRequest) {
       mimeType: file.type
     }, { 
       status: 200, 
-      headers: corsHeaders 
+      headers: dynamicCorsHeaders 
     })
 
   } catch (error) {
+    const origin = request.headers.get('origin')
+    const dynamicCorsHeaders = getCorsHeaders(origin)
+    
     console.error('[WEBSITE UPLOAD] File upload error:', error)
     console.error('[WEBSITE UPLOAD] Error details:', {
       name: error.name,
@@ -135,7 +143,7 @@ export async function POST(request: NextRequest) {
         error: 'Failed to upload file',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
-      { status: 500, headers: corsHeaders }
+      { status: 500, headers: dynamicCorsHeaders }
     )
   }
 }
