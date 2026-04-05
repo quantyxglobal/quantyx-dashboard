@@ -5,14 +5,26 @@ import { z } from 'zod'
 import { SupabaseDB } from '@/lib/supabase-db'
 import { randomUUID } from 'crypto'
 
-// S3 Client Configuration
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION!,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!
+// S3 Client Configuration - support both standard and Amplify naming
+const getS3Config = () => {
+  const accessKeyId = process.env.AMPLIFY_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID
+  const secretAccessKey = process.env.AMPLIFY_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY
+  const region = process.env.CUSTOM_AWS_REGION || process.env.AMPLIFY_AWS_REGION || process.env.AWS_REGION
+  
+  if (!accessKeyId || !secretAccessKey || !region) {
+    throw new Error('Missing AWS credentials or region')
   }
-})
+  
+  return {
+    region,
+    credentials: {
+      accessKeyId,
+      secretAccessKey
+    }
+  }
+}
+
+const s3Client = new S3Client(getS3Config())
 
 // Request validation schema
 const assembleRequestSchema = z.object({
@@ -133,7 +145,7 @@ export async function POST(request: NextRequest) {
           file_size: assembledBuffer.length,
           s3_bucket: process.env.AWS_S3_BUCKET_NAME!,
           s3_key: s3Key,
-          s3_region: process.env.AWS_REGION!,
+          s3_region: process.env.CUSTOM_AWS_REGION || process.env.AMPLIFY_AWS_REGION || process.env.AWS_REGION!,
           source: 'CASE_UPLOAD' as const,
           category: 'OTHER' as const,
           case_id: caseId,
