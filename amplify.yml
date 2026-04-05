@@ -7,25 +7,21 @@ frontend:
         - npx prisma generate
     build:
       commands:
-        # Echo environment variables into .env.production for SSR Lambda runtime
-        - echo "NEXTAUTH_SECRET=$NEXTAUTH_SECRET" >> .env.production
-        - echo "NEXTAUTH_URL=$NEXTAUTH_URL" >> .env.production
-        - echo "DATABASE_URL=$DATABASE_URL" >> .env.production
-        - echo "SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY" >> .env.production
-        - echo "NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL" >> .env.production
-        - echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY" >> .env.production
-        # AWS variables with AMPLIFY_ prefix
-        - echo "AWS_ACCESS_KEY_ID=$AMPLIFY_AWS_ACCESS_KEY_ID" >> .env.production
-        - echo "AWS_SECRET_ACCESS_KEY=$AMPLIFY_AWS_SECRET_ACCESS_KEY" >> .env.production
-        - echo "CUSTOM_AWS_REGION=$AMPLIFY_AWS_REGION" >> .env.production
-        - echo "AWS_S3_BUCKET_NAME=$AMPLIFY_AWS_S3_BUCKET_NAME" >> .env.production
-        # Verify the region is set correctly (for debugging)
-        - echo "Build-time AMPLIFY_AWS_REGION is $AMPLIFY_AWS_REGION"
-        - grep CUSTOM_AWS_REGION .env.production || echo "WARNING: CUSTOM_AWS_REGION not set in .env.production"
-        # Email variables
-        - echo "POSTMARK_API_KEY=$POSTMARK_SERVER_TOKEN" >> .env.production
-        - echo "CASE_NOTIFICATION_EMAIL=$POSTMARK_ADMIN_EMAIL" >> .env.production
-        - echo "ACCOUNT_NOTIFICATION_EMAIL=$POSTMARK_SUPPORT_EMAIL" >> .env.production
+        - 'echo "NEXTAUTH_SECRET=$NEXTAUTH_SECRET" >> .env.production'
+        - 'echo "NEXTAUTH_URL=$NEXTAUTH_URL" >> .env.production'
+        - 'echo "DATABASE_URL=$DATABASE_URL" >> .env.production'
+        - 'echo "SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY" >> .env.production'
+        - 'echo "NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL" >> .env.production'
+        - 'echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY" >> .env.production'
+        - 'echo "AWS_ACCESS_KEY_ID=$AMPLIFY_AWS_ACCESS_KEY_ID" >> .env.production'
+        - 'echo "AWS_SECRET_ACCESS_KEY=$AMPLIFY_AWS_SECRET_ACCESS_KEY" >> .env.production'
+        - 'echo "CUSTOM_AWS_REGION=$AMPLIFY_AWS_REGION" >> .env.production'
+        - 'echo "AWS_S3_BUCKET_NAME=$AMPLIFY_AWS_S3_BUCKET_NAME" >> .env.production'
+        - 'echo "Build-time AMPLIFY_AWS_REGION is $AMPLIFY_AWS_REGION"'
+        - 'grep CUSTOM_AWS_REGION .env.production || echo "WARNING not set"'
+        - 'echo "POSTMARK_API_KEY=$POSTMARK_SERVER_TOKEN" >> .env.production'
+        - 'echo "CASE_NOTIFICATION_EMAIL=$POSTMARK_ADMIN_EMAIL" >> .env.production'
+        - 'echo "ACCOUNT_NOTIFICATION_EMAIL=$POSTMARK_SUPPORT_EMAIL" >> .env.production'
         - npm run build
   artifacts:
     baseDirectory: .next
