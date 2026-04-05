@@ -1,28 +1,15 @@
 import { NextResponse } from 'next/server'
 
 // CORS configuration for website API routes
-// Allow both localhost and production website domain
-const allowedOrigins = [
-  'http://localhost:8080',
-  'https://main.d21id4oumvz7k0.amplifyapp.com',
-  'https://www.quantyxglobal.com',
-  'https://quantyxglobal.com'
-]
-
+// For website public APIs, use permissive CORS
 export function getCorsHeaders(origin: string | null) {
-  // For website API routes, be more permissive
-  // If origin is in allowed list, use it; otherwise use wildcard
-  const allowedOrigin = origin && allowedOrigins.includes(origin) ? origin : '*'
-  
   console.log('[CORS] Request origin:', origin)
-  console.log('[CORS] Allowed origin:', allowedOrigin)
-  console.log('[CORS] Is in allowed list:', origin ? allowedOrigins.includes(origin) : false)
   
+  // Use wildcard for website API routes to allow all origins
   return {
-    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-    'Access-Control-Allow-Credentials': allowedOrigin === '*' ? 'false' : 'true',
     'Access-Control-Max-Age': '86400', // 24 hours
   }
 }
