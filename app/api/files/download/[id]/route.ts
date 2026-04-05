@@ -23,7 +23,7 @@ export async function GET(
     }
 
     // Get case information to check authorization
-    const caseData = await SupabaseDB.getCase(fileData.case_id)
+    const caseData = await SupabaseDB.getCaseById(fileData.case_id)
     
     if (!caseData) {
       return NextResponse.json({ error: 'Case not found' }, { status: 404 })
