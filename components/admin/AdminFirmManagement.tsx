@@ -216,10 +216,13 @@ export function AdminFirmManagement({ firms, orphanedUsers }: AdminFirmManagemen
                         </div>
                         <span className="flex-1 truncate">{user.name}</span>
                         <Badge 
-                          variant={user.role === 'admin' ? 'default' : 'secondary'}
+                          variant={user.role === 'ADMIN' || user.role === 'SUPER_ADMIN' ? 'default' : 'secondary'}
                           className="text-xs capitalize"
                         >
-                          {user.role}
+                          {user.role === 'SUPER_ADMIN' ? 'Super Admin' : 
+                           user.role === 'ADMIN' ? 'Admin' : 
+                           user.role === 'EMPLOYEE' ? 'Employee' : 
+                           user.role === 'CLIENT' ? 'Client' : user.role}
                         </Badge>
                       </div>
                     ))}

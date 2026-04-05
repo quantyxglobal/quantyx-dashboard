@@ -98,10 +98,13 @@ export function FirmUserManagement({ firm, currentUser, pendingInvitations }: Fi
                 </div>
                 <div className="flex items-center space-x-3">
                   <Badge 
-                    variant={user.role === 'admin' ? 'default' : 'secondary'}
+                    variant={user.role === 'ADMIN' || user.role === 'SUPER_ADMIN' ? 'default' : 'secondary'}
                     className="capitalize"
                   >
-                    {user.role}
+                    {user.role === 'SUPER_ADMIN' ? 'Super Admin' : 
+                     user.role === 'ADMIN' ? 'Admin' : 
+                     user.role === 'EMPLOYEE' ? 'Employee' : 
+                     user.role === 'CLIENT' ? 'Client' : user.role}
                   </Badge>
                   <div className="text-right">
                     <p className="text-xs text-muted-foreground">

@@ -37,9 +37,14 @@ export function RoutePreloader({ userRole }: RoutePreloaderProps) {
 
   useEffect(() => {
     // Prefetch common routes based on user role
-    if (userRole === 'admin') {
+    if (userRole === 'SUPER_ADMIN') {
+      router.prefetch('/superadmin/users')
+      router.prefetch('/superadmin/firms')
+    } else if (userRole === 'ADMIN') {
       router.prefetch('/admin/users')
       router.prefetch('/admin/firms')
+    } else if (userRole === 'EMPLOYEE') {
+      router.prefetch('/admin')
     } else {
       router.prefetch('/dashboard/case/create')
       router.prefetch('/dashboard/settings')

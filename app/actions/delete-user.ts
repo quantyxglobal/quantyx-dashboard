@@ -1,19 +1,19 @@
 'use server'
 
- '@/auth'
-import { prisma } from '@/lib/prisma'
+import { auth } from '@/auth'
+import { SupabaseDB } from '@/lib/supabase-db'
 import { logAuditAction } from '@/lib/audit-log'
- 'next/navigation'
+import { revalidatePath } from 'next/navigation'
 
-export async function deleteUser(_userId: string) {
+export async function deleteUser(userId: string) {
   try {
     const session = await auth()
     
-    // Verify admin authorization
-    if (!session || session.user.role !== 'admin') {
+    // Only SUPER_ADMIN can delete users
+    if (!session || session.user.role !== 'SUPER_ADMIN') {
       return { 
-        _success: false, 
-        _error: '_Unauthorized: Admin access required' 
+        success: false, 
+        error: 'Unauthorized: Only Super Admins can delete users' 
       }
     }
 
@@ -26,10 +26,7 @@ export async function deleteUser(_userId: string) {
     }
 
     // Get user details before deletion for audit log
-    const userToDelete = await prisma.user.findUnique({
-      where: { id: userId },
-      include: { organization: true }
-    })
+    const userToDelete = await SupabaseDB.getUser(userId)
 
     if (!userToDelete) {
       return { 
@@ -38,34 +35,29 @@ export async function deleteUser(_userId: string) {
       }
     }
 
-    // Prevent deletion of other admin accounts
-    if (userToDelete.role === 'ADMIN') {
-      return { 
-        success: false, 
-        error: 'Cannot delete admin accounts' 
+    // Get organization details if user has one
+    let organizationName = 'Unknown'
+    if (userToDelete.organization_id) {
+      const org = await SupabaseDB.getOrganization(userToDelete.organization_id)
+      if (org) {
+        organizationName = org.name
       }
     }
 
-    // Delete user in a transaction to handle related data
-    await prisma.$transaction(async (tx) => {
-      // Delete related audit logs
-      await tx.auditLog.deleteMany({
-        where: { user_id: userId }
-      })
-
-      // Finally delete the user
-      await tx.user.delete({
-        where: { id: userId }
-      })
-    })
+    // Delete user using Supabase
+    await SupabaseDB.deleteUser(userId)
 
     // Log the deletion action
     await logAuditAction({
       userId: session.user.id,
       action: 'user_deleted',
-      details: `Admin deleted user: ${userToDelete.first_name} ${userToDelete.last_name} (${userToDelete.email}) from organization: ${userToDelete.organization?.name || 'Unknown'}`,
+      details: `Super Admin deleted user: ${userToDelete.first_name} ${userToDelete.last_name} (${userToDelete.email}) from organization: ${organizationName}`,
       entityType: 'user'
     })
+
+    // Revalidate pages
+    revalidatePath('/superadmin/users')
+    revalidatePath('/admin/users')
 
     return { 
       success: true, 

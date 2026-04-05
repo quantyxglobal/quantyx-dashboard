@@ -20,10 +20,11 @@ export default function NotFound() {
       
       // Determine dashboard URL based on role
       const role = session.user.role
-      if (role === 'admin') {
-        // Could be SUPER_ADMIN or ADMIN, default to admin
+      if (role === 'SUPER_ADMIN') {
+        setDashboardUrl('/superadmin')
+      } else if (role === 'ADMIN') {
         setDashboardUrl('/admin')
-      } else if (role === 'employee') {
+      } else if (role === 'EMPLOYEE') {
         setDashboardUrl('/admin')
       } else {
         setDashboardUrl('/dashboard')
