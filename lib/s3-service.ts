@@ -7,8 +7,12 @@ let _s3Client: S3Client | null = null
 
 function getS3Client(): S3Client {
   if (!_s3Client) {
+    // Use CUSTOM_AWS_REGION first (set in next.config.ts from AMPLIFY_AWS_REGION)
+    // Fall back to AMPLIFY_AWS_REGION, then AWS_REGION
+    const region = process.env.CUSTOM_AWS_REGION || process.env.AMPLIFY_AWS_REGION || process.env.AWS_REGION!
+    
     _s3Client = new S3Client({
-      region: process.env.AWS_REGION!,
+      region,
       credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
@@ -52,12 +56,14 @@ export class S3Service {
 
       await getS3Client().send(command)
 
-      // Return the S3 URL
-      const url = `https://${getBucketName()}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`
+      // Return the S3 URL using correct region
+      const region = process.env.CUSTOM_AWS_REGION || process.env.AMPLIFY_AWS_REGION || process.env.AWS_REGION!
+      const url = `https://${getBucketName()}.s3.${region}.amazonaws.com/${key}`
       
       return { url, key }
     } catch (error: any) {
       console.error('Error uploading file to S3:', error)
+      const region = process.env.CUSTOM_AWS_REGION || process.env.AMPLIFY_AWS_REGION || process.env.AWS_REGION!
       console.error('Error details:', {
         name: error.name,
         message: error.message,
@@ -65,7 +71,7 @@ export class S3Service {
         requestId: error.$metadata?.requestId,
         bucket: getBucketName(),
         key: key,
-        region: process.env.AWS_REGION
+        region
       })
       
       // Provide more specific error messages
@@ -165,7 +171,8 @@ export class S3Service {
    * Generate a direct S3 URL for a file (for display purposes)
    */
   static getDirectS3Url(s3Key: string): string {
-    return `https://${getBucketName()}.s3.${process.env.AWS_REGION}.amazonaws.com/${s3Key}`
+    const region = process.env.CUSTOM_AWS_REGION || process.env.AMPLIFY_AWS_REGION || process.env.AWS_REGION!
+    return `https://${getBucketName()}.s3.${region}.amazonaws.com/${s3Key}`
   }
 
   /**
