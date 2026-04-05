@@ -4,6 +4,19 @@ const nextConfig: NextConfig = {
   // CRITICAL: Use standalone output for proper environment variable handling in AWS Lambda
   output: 'standalone',
   
+  // Inject environment variables at build time for Lambda runtime
+  env: {
+    // AWS Configuration - map from AMPLIFY_ prefix to standard names
+    AWS_ACCESS_KEY_ID: process.env.AMPLIFY_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID || '',
+    AWS_SECRET_ACCESS_KEY: process.env.AMPLIFY_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || '',
+    CUSTOM_AWS_REGION: process.env.AMPLIFY_AWS_REGION || process.env.CUSTOM_AWS_REGION || process.env.AWS_REGION || '',
+    AWS_S3_BUCKET_NAME: process.env.AMPLIFY_AWS_S3_BUCKET_NAME || process.env.AWS_S3_BUCKET_NAME || '',
+    // Email Configuration
+    POSTMARK_API_KEY: process.env.POSTMARK_SERVER_TOKEN || process.env.POSTMARK_API_KEY || '',
+    CASE_NOTIFICATION_EMAIL: process.env.POSTMARK_ADMIN_EMAIL || process.env.CASE_NOTIFICATION_EMAIL || '',
+    ACCOUNT_NOTIFICATION_EMAIL: process.env.POSTMARK_SUPPORT_EMAIL || process.env.ACCOUNT_NOTIFICATION_EMAIL || '',
+  },
+  
   // React Compiler disabled for now - uncomment when babel-plugin-react-compiler is installed
   // reactCompiler: true,
   

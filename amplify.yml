@@ -19,6 +19,9 @@ frontend:
         - echo "AWS_SECRET_ACCESS_KEY=$AMPLIFY_AWS_SECRET_ACCESS_KEY" >> .env.production
         - echo "CUSTOM_AWS_REGION=$AMPLIFY_AWS_REGION" >> .env.production
         - echo "AWS_S3_BUCKET_NAME=$AMPLIFY_AWS_S3_BUCKET_NAME" >> .env.production
+        # Verify the region is set correctly (for debugging)
+        - echo "Build-time AMPLIFY_AWS_REGION is $AMPLIFY_AWS_REGION"
+        - grep CUSTOM_AWS_REGION .env.production || echo "WARNING: CUSTOM_AWS_REGION not set in .env.production"
         # Email variables
         - echo "POSTMARK_API_KEY=$POSTMARK_SERVER_TOKEN" >> .env.production
         - echo "CASE_NOTIFICATION_EMAIL=$POSTMARK_ADMIN_EMAIL" >> .env.production
