@@ -1,7 +1,7 @@
 'use server'
 
 import { auth } from '@/auth'
-import { prisma } from '@/lib/prisma'
+import { SupabaseDB } from '@/lib/supabase-db'
 import bcrypt from 'bcryptjs'
 import { resetPasswordSchema } from '@/types/password'
 import { logPasswordChange } from '@/lib/audit-log'
@@ -15,7 +15,7 @@ export async function resetClientPassword(formData: FormData) {
   // Requirement 3.2: Verify user is authenticated and has admin role
   const session = await auth()
   
-  if (!session?.user?.id || session.user.role !== 'admin') {
+  if (!session?.user?.id || (session.user.role !== 'admin' && session.user.role !== 'SUPER_ADMIN')) {
     return { error: 'Access denied', status: 403 }
   }
   
@@ -36,17 +36,15 @@ export async function resetClientPassword(formData: FormData) {
   const { targetUserId, newPassword } = validation.data
   
   try {
-    // Requirement 3.3: Get target user from database
-    const targetUser = await prisma.user.findUnique({
-      where: { id: targetUserId }
-    })
+    // Requirement 3.3: Get target user from database using Supabase
+    const targetUser = await SupabaseDB.getUser(targetUserId)
     
     if (!targetUser) {
       return { error: 'User not found', status: 404 }
     }
     
     // Requirement 4.1, 4.2: Prevent admin-to-admin password resets
-    if (targetUser.role === 'ADMIN') {
+    if (targetUser.role === 'ADMIN' || targetUser.role === 'SUPER_ADMIN') {
       await logPasswordChange(
         targetUserId, 
         'admin_reset_failed', 
@@ -62,11 +60,8 @@ export async function resetClientPassword(formData: FormData) {
     // Requirement 3.5: Hash new password using bcrypt with 10 rounds
     const newPasswordHash = await bcrypt.hash(newPassword, 10)
     
-    // Requirement 3.6: Update password hash in database for target user
-    await prisma.user.update({
-      where: { id: targetUserId },
-      data: { password_hash: newPasswordHash }
-    })
+    // Requirement 3.6: Update password hash in database for target user using Supabase
+    await SupabaseDB.updateUserPassword(targetUserId, newPasswordHash)
     
     // Requirement 3.8, 7.2: Log successful password reset with admin ID and target user ID
     await logPasswordChange(
@@ -81,6 +76,7 @@ export async function resetClientPassword(formData: FormData) {
     
     // Requirement 4.3: Revalidate admin users page
     revalidatePath('/admin/users')
+    revalidatePath('/superadmin/users')
     
     return { 
       success: true, 
