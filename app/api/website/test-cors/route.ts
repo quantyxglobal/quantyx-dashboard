@@ -1,72 +1,79 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getCorsHeaders } from '../cors'
+import { getCorsHeaders } from "@/lib/cors"
 
 // Simple test endpoint to verify CORS configuration
-export const runtime = 'nodejs'
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
-export async function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get('origin')
-  const headers = getCorsHeaders(origin)
+export async function OPTIONS(req: Request) {
+  const origin = req.headers.get("origin")
+  console.log('[TEST CORS] OPTIONS request from origin:', origin)
   
-  console.log('[TEST CORS] OPTIONS request')
-  console.log('[TEST CORS] Origin:', origin)
-  console.log('[TEST CORS] Headers:', headers)
-  
-  return new NextResponse(null, { status: 204, headers })
-}
-
-export async function GET(request: NextRequest) {
-  const origin = request.headers.get('origin')
-  const dynamicCorsHeaders = getCorsHeaders(origin)
-  
-  console.log('[TEST CORS] GET request')
-  console.log('[TEST CORS] Origin:', origin)
-  console.log('[TEST CORS] Headers:', dynamicCorsHeaders)
-  
-  return NextResponse.json({
-    success: true,
-    message: 'CORS test successful',
-    receivedOrigin: origin,
-    corsHeaders: dynamicCorsHeaders,
-    timestamp: new Date().toISOString()
-  }, { 
-    status: 200, 
-    headers: dynamicCorsHeaders 
+  return new Response(null, {
+    status: 200,
+    headers: {
+      ...getCorsHeaders(origin)
+    }
   })
 }
 
-export async function POST(request: NextRequest) {
-  const origin = request.headers.get('origin')
-  const dynamicCorsHeaders = getCorsHeaders(origin)
+export async function GET(req: Request) {
+  const origin = req.headers.get("origin")
+  console.log('[TEST CORS] GET request from origin:', origin)
   
-  console.log('[TEST CORS] POST request')
-  console.log('[TEST CORS] Origin:', origin)
-  console.log('[TEST CORS] Headers:', dynamicCorsHeaders)
+  return new Response(
+    JSON.stringify({ 
+      success: true,
+      message: "CORS test successful",
+      receivedOrigin: origin,
+      timestamp: new Date().toISOString()
+    }),
+    {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        ...getCorsHeaders(origin)
+      }
+    }
+  )
+}
+
+export async function POST(req: Request) {
+  const origin = req.headers.get("origin")
+  console.log('[TEST CORS] POST request from origin:', origin)
   
   try {
-    const body = await request.json()
+    const body = await req.json()
     
-    return NextResponse.json({
-      success: true,
-      message: 'CORS POST test successful',
-      receivedOrigin: origin,
-      receivedData: body,
-      corsHeaders: dynamicCorsHeaders,
-      timestamp: new Date().toISOString()
-    }, { 
-      status: 200, 
-      headers: dynamicCorsHeaders 
-    })
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: "CORS POST test successful",
+        receivedOrigin: origin,
+        receivedData: body,
+        timestamp: new Date().toISOString()
+      }),
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          ...getCorsHeaders(origin)
+        }
+      }
+    )
   } catch (error) {
-    return NextResponse.json({
-      success: false,
-      error: 'Failed to parse request body',
-      receivedOrigin: origin,
-      timestamp: new Date().toISOString()
-    }, { 
-      status: 400, 
-      headers: dynamicCorsHeaders 
-    })
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: "Failed to parse request body",
+        receivedOrigin: origin,
+        timestamp: new Date().toISOString()
+      }),
+      {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json",
+          ...getCorsHeaders(origin)
+        }
+      }
+    )
   }
 }

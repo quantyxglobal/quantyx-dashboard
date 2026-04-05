@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { websiteSubmissionService } from '@/lib/website-submission-service'
 import { z } from 'zod'
-import { getCorsHeaders } from '../cors'
+import { getCorsHeaders } from '@/lib/cors'
+
+export const dynamic = 'force-dynamic'
 
 // Validation schema for contact form
 const contactFormSchema = z.object({
@@ -21,18 +22,22 @@ const contactFormSchema = z.object({
   })).optional().default([])
 })
 
-export async function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get('origin')
-  const headers = getCorsHeaders(origin)
-  return new NextResponse(null, { status: 204, headers })
+export async function OPTIONS(req: Request) {
+  const origin = req.headers.get('origin')
+  return new Response(null, {
+    status: 200,
+    headers: {
+      ...getCorsHeaders(origin)
+    }
+  })
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const origin = request.headers.get('origin')
-    const dynamicCorsHeaders = getCorsHeaders(origin)
+    const origin = req.headers.get('origin')
+    const corsHeaders = getCorsHeaders(origin)
     
-    const body = await request.json()
+    const body = await req.json()
     
     // Validate input
     const validatedData = contactFormSchema.parse(body)
@@ -41,34 +46,61 @@ export async function POST(request: NextRequest) {
     const result = await websiteSubmissionService.createContactInquiry(validatedData)
     
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || 'Failed to submit contact form' },
-        { status: 500, headers: dynamicCorsHeaders }
+      return new Response(
+        JSON.stringify({ error: result.error || 'Failed to submit contact form' }),
+        { 
+          status: 500, 
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders
+          }
+        }
       )
     }
 
-    return NextResponse.json({
-      success: true,
-      message: 'Contact form submitted successfully',
-      inquiryId: result.id
-    }, { status: 200, headers: dynamicCorsHeaders })
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: 'Contact form submitted successfully',
+        inquiryId: result.id
+      }),
+      { 
+        status: 200, 
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders
+        }
+      }
+    )
 
   } catch (error) {
-    const origin = request.headers.get('origin')
-    const dynamicCorsHeaders = getCorsHeaders(origin)
+    const origin = req.headers.get('origin')
+    const corsHeaders = getCorsHeaders(origin)
     
     console.error('Contact form API error:', error)
     
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid form data', details: error.errors },
-        { status: 400, headers: dynamicCorsHeaders }
+      return new Response(
+        JSON.stringify({ error: 'Invalid form data', details: error.errors }),
+        { 
+          status: 400, 
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders
+          }
+        }
       )
     }
 
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500, headers: dynamicCorsHeaders }
+    return new Response(
+      JSON.stringify({ error: 'Internal server error' }),
+      { 
+        status: 500, 
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders
+        }
+      }
     )
   }
 }

@@ -1,20 +1,22 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getCorsHeaders } from '../cors'
+import { getCorsHeaders } from '@/lib/cors'
 
 // Debug endpoint to check environment variables
-export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-export async function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get('origin')
-  const headers = getCorsHeaders(origin)
-  return new NextResponse(null, { status: 204, headers })
+export async function OPTIONS(req: Request) {
+  const origin = req.headers.get('origin')
+  return new Response(null, {
+    status: 200,
+    headers: {
+      ...getCorsHeaders(origin)
+    }
+  })
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(req: Request) {
   try {
-    const origin = request.headers.get('origin')
-    const dynamicCorsHeaders = getCorsHeaders(origin)
+    const origin = req.headers.get('origin')
+    const corsHeaders = getCorsHeaders(origin)
     
     // Return sanitized environment info (don't expose secrets)
     const envInfo = {
@@ -31,25 +33,37 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString()
     }
     
-    return NextResponse.json({
-      success: true,
-      environment: envInfo
-    }, { 
-      status: 200, 
-      headers: dynamicCorsHeaders 
-    })
+    return new Response(
+      JSON.stringify({
+        success: true,
+        environment: envInfo
+      }),
+      { 
+        status: 200, 
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders
+        }
+      }
+    )
 
   } catch (error) {
-    const origin = request.headers.get('origin')
-    const dynamicCorsHeaders = getCorsHeaders(origin)
+    const origin = req.headers.get('origin')
+    const corsHeaders = getCorsHeaders(origin)
     
     console.error('[DEBUG ENV] Error:', error)
-    return NextResponse.json(
-      { 
+    return new Response(
+      JSON.stringify({ 
         error: 'Failed to get environment info',
         details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500, headers: dynamicCorsHeaders }
+      }),
+      { 
+        status: 500, 
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders
+        }
+      }
     )
   }
 }
