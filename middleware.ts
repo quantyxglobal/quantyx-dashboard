@@ -76,12 +76,8 @@ export async function middleware(request: NextRequest) {
     } catch (error) {
       console.error('[MIDDLEWARE] Error fetching user:', error)
       // Fall back to session role if database query fails
-      const roleMap: Record<string, UserRole> = {
-        'admin': 'ADMIN',
-        'employee': 'EMPLOYEE',
-        'client': 'CLIENT'
-      }
-      actualRole = roleMap[session.user.role] || 'CLIENT'
+      // Session now contains actual database roles (SUPER_ADMIN, ADMIN, EMPLOYEE, CLIENT)
+      actualRole = session.user.role as UserRole
     }
 
     // Redirect to MFA setup if required (unless already on setup page)

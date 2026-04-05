@@ -31,8 +31,8 @@ export async function GET(
 
     // Check authorization
     const userCanAccess = 
-      session.user.role === 'admin' || 
-      session.user.role === 'super_admin' ||
+      session.user.role === 'ADMIN' || 
+      session.user.role === 'SUPER_ADMIN' ||
       caseData.owner_id === session.user.id ||
       fileData.uploaded_by_id === session.user.id
 

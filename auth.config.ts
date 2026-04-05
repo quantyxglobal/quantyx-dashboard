@@ -94,21 +94,12 @@ export const authConfig = {
           }
 
           console.log('[AUTH] Authentication successful')
-          // Return user object with required fields - map roles appropriately
-          let mappedRole: 'admin' | 'client' | 'employee'
-          if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') {
-            mappedRole = 'admin'
-          } else if (user.role === 'EMPLOYEE') {
-            mappedRole = 'employee'
-          } else {
-            mappedRole = 'client'
-          }
-          
+          // Return user object with required fields - preserve original role from database
           return {
             id: user.id,
             email: user.email,
             name: `${user.first_name} ${user.last_name}`,
-            role: mappedRole,
+            role: user.role, // Keep original role: SUPER_ADMIN, ADMIN, EMPLOYEE, CLIENT
             organization_id: user.organization_id ?? undefined
           }
         } catch (error) {
@@ -158,8 +149,8 @@ export const authConfig = {
       // Add role and organization_id to token on sign in
       if (user) {
         token.id = user.id
-        // Map roles: SUPER_ADMIN/ADMIN -> 'admin', EMPLOYEE -> 'employee', CLIENT -> 'client'
-        console.log('[AUTH] JWT mapping role from', user.role, 'to', user.role)
+        // Preserve original role from database (SUPER_ADMIN, ADMIN, EMPLOYEE, CLIENT)
+        console.log('[AUTH] JWT preserving role:', user.role)
         token.role = user.role
         token.organization_id = user.organization_id
         // Set session start time for 24-hour expiration tracking
@@ -190,7 +181,8 @@ export const authConfig = {
       // Add role and organization_id to session
       if (token && session.user) {
         session.user.id = token.id as string
-        session.user.role = token.role as 'admin' | 'client' | 'employee'
+        // Preserve original role from token (SUPER_ADMIN, ADMIN, EMPLOYEE, CLIENT)
+        session.user.role = token.role as 'SUPER_ADMIN' | 'ADMIN' | 'EMPLOYEE' | 'CLIENT'
         session.user.organization_id = token.organization_id as string | undefined
         // Add session start time for client-side timeout handling
         (session as any).sessionStart = token.sessionStart
