@@ -8,18 +8,24 @@ import { logPasswordChange } from '@/lib/audit-log'
 import { revalidatePath } from 'next/cache'
 
 /**
- * Server action for admin users to reset client passwords
- * Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 4.1, 4.2, 4.3
+ * Server action for SUPER_ADMIN to reset any user's password
+ * Regular ADMINs cannot reset passwords
+ * All users can change their own passwords through settings
  */
 export async function resetClientPassword(formData: FormData) {
-  // Requirement 3.2: Verify user is authenticated and has admin role
+  // Only SUPER_ADMIN can reset passwords for other users
   const session = await auth()
   
-  if (!session?.user?.id || (session.user.role !== 'admin' && session.user.role !== 'SUPER_ADMIN')) {
-    return { error: 'Access denied', status: 403 }
+  if (!session?.user?.id) {
+    return { error: 'Access denied - Not authenticated', status: 403 }
+  }
+
+  // Only SUPER_ADMIN can use this function
+  if (session.user.role !== 'SUPER_ADMIN') {
+    return { error: 'Access denied - Only Super Admins can reset passwords for other users', status: 403 }
   }
   
-  // Requirement 3.4: Validate input against complexity rules
+  // Validate input against complexity rules
   const validation = resetPasswordSchema.safeParse({
     targetUserId: formData.get('targetUserId'),
     newPassword: formData.get('newPassword'),
@@ -36,45 +42,36 @@ export async function resetClientPassword(formData: FormData) {
   const { targetUserId, newPassword } = validation.data
   
   try {
-    // Requirement 3.3: Get target user from database using Supabase
+    // Get target user from database using Supabase
     const targetUser = await SupabaseDB.getUser(targetUserId)
     
     if (!targetUser) {
       return { error: 'User not found', status: 404 }
     }
     
-    // Requirement 4.1, 4.2: Prevent admin-to-admin password resets
-    if (targetUser.role === 'ADMIN' || targetUser.role === 'SUPER_ADMIN') {
-      await logPasswordChange(
-        targetUserId, 
-        'admin_reset_failed', 
-        'Cannot reset admin password',
-        session.user.id
-      )
+    // Prevent resetting own password through this function
+    if (targetUserId === session.user.id) {
       return { 
-        error: 'Admin passwords cannot be reset by other admins', 
+        error: 'Cannot reset your own password through this function. Use the settings page instead.', 
         status: 403 
       }
     }
     
-    // Requirement 3.5: Hash new password using bcrypt with 10 rounds
+    // Hash new password using bcrypt with 10 rounds
     const newPasswordHash = await bcrypt.hash(newPassword, 10)
     
-    // Requirement 3.6: Update password hash in database for target user using Supabase
+    // Update password hash in database for target user using Supabase
     await SupabaseDB.updateUserPassword(targetUserId, newPasswordHash)
     
-    // Requirement 3.8, 7.2: Log successful password reset with admin ID and target user ID
+    // Log successful password reset with admin ID and target user ID
     await logPasswordChange(
       targetUserId, 
-      'admin_reset_success',
-      undefined,
+      'superadmin_reset_success',
+      `Password reset by SUPER_ADMIN ${session.user.email}`,
       session.user.id
     )
     
-    // Requirement 3.7: Note - NextAuth v5 with JWT doesn't have built-in session invalidation
-    // Sessions will expire naturally or on next auth check
-    
-    // Requirement 4.3: Revalidate admin users page
+    // Revalidate pages
     revalidatePath('/admin/users')
     revalidatePath('/superadmin/users')
     
@@ -83,11 +80,10 @@ export async function resetClientPassword(formData: FormData) {
       message: `Password reset successfully for ${targetUser.first_name} ${targetUser.last_name}` 
     }
   } catch (error) {
-    // Requirement 8.2: Log technical details server-side
+    // Log technical details server-side
     console.error('Reset password error:', error)
     
-    // Requirement 8.4: Return generic error message without sensitive information
-    // Handle specific database errors with generic user-facing messages
+    // Return generic error message without sensitive information
     if (error instanceof Error) {
       // Database connection errors
       if (error.message.includes('connect') || error.message.includes('ECONNREFUSED')) {
