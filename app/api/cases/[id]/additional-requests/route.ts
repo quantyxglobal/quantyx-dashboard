@@ -170,6 +170,27 @@ export async function POST(
 
     console.log('[ADDITIONAL_SERVICES] Successfully added services')
 
+    // If case status is DELIVERED, change it back to PENDING
+    if (caseRecord.status === 'DELIVERED') {
+      console.log('[ADDITIONAL_SERVICES] Case was DELIVERED, changing status to PENDING')
+      await SupabaseDB.updateCaseStatus(caseId, 'PENDING')
+      
+      // Log the status change
+      await SupabaseDB.createAuditLog({
+        action: 'UPDATE',
+        entity_type: 'case',
+        entity_id: caseId,
+        user_id: session.user.id,
+        organization_id: user.organization_id,
+        new_values: { 
+          action: 'status_changed_to_pending',
+          reason: 'additional_services_requested',
+          old_status: 'DELIVERED',
+          new_status: 'PENDING'
+        }
+      })
+    }
+
     return NextResponse.json({ 
       success: true, 
       servicesAdded: newServiceIds.length
