@@ -63,7 +63,7 @@ export default async function CaseDetailPage({
   
   const existingServices = caseData.services.map(s => s.service?.slug || s.service_id)
   const selectedServices = caseData.services.map(s => s.service)
-  const isClient = session.user.role === 'client'
+  const isClient = session.user.role === 'CLIENT'
 
   return (
     <div className="space-y-8">
