@@ -69,6 +69,13 @@ export function RegistrationForm() {
       
       const result = await registerUser(formData)
       
+      // Handle case where result is undefined or null
+      if (!result) {
+        console.error('Registration returned undefined result')
+        setError('Registration failed. Please try again.')
+        return
+      }
+      
       if (result.success) {
         setSuccess('Registration successful! You can now sign in with your credentials.')
         setTimeout(() => {
