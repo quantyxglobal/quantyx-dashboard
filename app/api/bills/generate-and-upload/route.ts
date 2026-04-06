@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Only admins and super admins can generate bills
-    if (session.user.role !== 'admin' && session.user.role !== 'superadmin') {
+    if (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

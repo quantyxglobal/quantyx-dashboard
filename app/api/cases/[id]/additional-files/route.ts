@@ -238,6 +238,20 @@ export async function POST(
           new_status: 'PENDING'
         }
       })
+      
+      // Send email notification about status change
+      try {
+        const emailService = createEmailService()
+        await emailService.sendCaseStatusUpdateNotification(
+          caseId,
+          'DELIVERED',
+          'PENDING',
+          session.user.name || session.user.email
+        )
+      } catch (emailError) {
+        console.error('[ADDITIONAL_FILES] Failed to send status change notification:', emailError)
+        // Don't fail the operation if email fails
+      }
     }
 
     return NextResponse.json({ 
