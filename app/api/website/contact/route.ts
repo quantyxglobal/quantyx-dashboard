@@ -63,16 +63,56 @@ export async function POST(req: Request) {
     try {
       console.log('[CONTACT API] Sending email notifications...')
       
+      // Build file list with download links (if any files were uploaded)
+      const fileListHtml = validatedData.uploadedFiles && validatedData.uploadedFiles.length > 0 
+        ? validatedData.uploadedFiles.map(file => `
+          <li style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+            <strong>${file.originalName}</strong> (${(file.size / 1024 / 1024).toFixed(2)} MB)
+            <br>
+            <small style="color: #666;">Type: ${file.mimeType}</small>
+            <br>
+            <a href="${file.downloadUrl}" style="color: #262083; text-decoration: none;">📥 Download File</a>
+            <br>
+            <small style="color: #666;">Download link expires in 7 days</small>
+          </li>
+        `).join('')
+        : ''
+      
+      const fileListText = validatedData.uploadedFiles && validatedData.uploadedFiles.length > 0
+        ? validatedData.uploadedFiles.map(file => 
+            `- ${file.originalName} (${(file.size / 1024 / 1024).toFixed(2)} MB)\n  Download: ${file.downloadUrl}`
+          ).join('\n')
+        : ''
+      
       // Email to admin/support team
       const adminEmailHtml = `
-        <h2>New Contact Form Submission</h2>
-        <p><strong>Name:</strong> ${validatedData.firstName} ${validatedData.lastName}</p>
-        <p><strong>Email:</strong> ${validatedData.email}</p>
-        <p><strong>Phone:</strong> ${validatedData.phone}</p>
-        <p><strong>Company:</strong> ${validatedData.company || 'Not provided'}</p>
-        <p><strong>Services Interested:</strong> ${validatedData.services.length > 0 ? validatedData.services.join(', ') : 'None specified'}</p>
-        ${validatedData.message ? `<p><strong>Message:</strong><br>${validatedData.message.replace(/\n/g, '<br>')}</p>` : ''}
-        <p>Contact Inquiry ID: ${result.id}</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #262083;">New Contact Form Submission</h2>
+          <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p><strong>Name:</strong> ${validatedData.firstName} ${validatedData.lastName}</p>
+            <p><strong>Email:</strong> ${validatedData.email}</p>
+            <p><strong>Phone:</strong> ${validatedData.phone}</p>
+            <p><strong>Company:</strong> ${validatedData.company || 'Not provided'}</p>
+            <p><strong>Services Interested:</strong> ${validatedData.services.length > 0 ? validatedData.services.join(', ') : 'None specified'}</p>
+          </div>
+          ${validatedData.message ? `
+            <h3>Message:</h3>
+            <div style="background: #ffffff; padding: 15px; border-left: 4px solid #262083; margin: 10px 0;">
+              ${validatedData.message.replace(/\n/g, '<br>')}
+            </div>
+          ` : ''}
+          ${fileListHtml ? `
+            <h3>Uploaded Documents (${validatedData.uploadedFiles.length} files):</h3>
+            <ul style="list-style: none; padding: 0;">
+              ${fileListHtml}
+            </ul>
+          ` : ''}
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+          <p style="color: #666; font-size: 12px;">
+            Contact Inquiry ID: ${result.id}<br>
+            Submitted at: ${new Date().toLocaleString()}
+          </p>
+        </div>
       `
       
       const adminEmailText = `
@@ -83,8 +123,10 @@ Email: ${validatedData.email}
 Phone: ${validatedData.phone}
 Company: ${validatedData.company || 'Not provided'}
 Services Interested: ${validatedData.services.length > 0 ? validatedData.services.join(', ') : 'None specified'}
-${validatedData.message ? `Message:\n${validatedData.message}\n` : ''}
+${validatedData.message ? `\nMessage:\n${validatedData.message}\n` : ''}
+${fileListText ? `\nUploaded Files (${validatedData.uploadedFiles.length}):\n${fileListText}\n` : ''}
 Contact Inquiry ID: ${result.id}
+Submitted at: ${new Date().toLocaleString()}
       `
       
       await postmarkEmailService.sendEmail({
