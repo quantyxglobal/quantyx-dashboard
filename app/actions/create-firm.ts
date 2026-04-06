@@ -15,8 +15,8 @@ const createFirmSchema = z.object({
 export async function createFirm(formData: FormData) {
   const session = await auth()
   
-  // Only admin users can create firms
-  if (!session || session.user.role !== 'admin') {
+  // Only admin and super admin users can create firms
+  if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')) {
     return { 
       success: false, 
       error: 'Unauthorized: Admin access required' 

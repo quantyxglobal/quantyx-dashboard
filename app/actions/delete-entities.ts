@@ -11,8 +11,8 @@ import { S3Service } from '@/lib/s3-service'
 export async function deleteUser(userId: string) {
   const session = await auth()
   
-  // Check if user is superadmin - session.user.role is 'admin' for SUPER_ADMIN
-  if (!session || session.user.role !== 'admin') {
+  // Check if user is superadmin
+  if (!session || session.user.role !== 'SUPER_ADMIN') {
     return { success: false, error: 'Unauthorized: Only superadmins can delete users' }
   }
   
@@ -50,8 +50,8 @@ export async function deleteUser(userId: string) {
 export async function deleteCase(caseId: string) {
   const session = await auth()
   
-  // Check if user is superadmin - session.user.role is 'admin' for SUPER_ADMIN
-  if (!session || session.user.role !== 'admin') {
+  // Check if user is superadmin
+  if (!session || session.user.role !== 'SUPER_ADMIN') {
     return { success: false, error: 'Unauthorized: Only superadmins can delete cases' }
   }
   
@@ -103,8 +103,8 @@ export async function deleteCase(caseId: string) {
 export async function deleteOrganization(organizationId: string) {
   const session = await auth()
   
-  // Check if user is superadmin - session.user.role is 'admin' for SUPER_ADMIN
-  if (!session || session.user.role !== 'admin') {
+  // Check if user is superadmin
+  if (!session || session.user.role !== 'SUPER_ADMIN') {
     return { success: false, error: 'Unauthorized: Only superadmins can delete organizations' }
   }
   

@@ -24,8 +24,8 @@ const createClientSchema = z.object({
 export async function createClientAccount(formData: FormData) {
   const session = await auth()
   
-  // Only admins can create client accounts
-  if (!session || session.user.role !== 'admin') {
+  // Only admins and super admins can create client accounts
+  if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')) {
     return { 
       success: false, 
       error: 'Unauthorized: Admin access required' 

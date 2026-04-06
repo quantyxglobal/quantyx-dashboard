@@ -9,8 +9,8 @@ export async function updateCaseStatus(caseId: string, status: CaseStatus) {
   try {
     const session = await auth()
 
-    // Check if user is admin (session role is lowercase 'admin' for SUPER_ADMIN/ADMIN)
-    if (!session || session.user.role !== 'admin') {
+    // Check if user is admin or super admin
+    if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')) {
       return { error: 'Access denied', status: 403 }
     }
 

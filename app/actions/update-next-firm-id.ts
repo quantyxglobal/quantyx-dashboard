@@ -8,7 +8,7 @@ export async function updateNextFirmId(nextFirmId: number) {
   const session = await auth()
 
   // Only superadmins can update system settings
-  if (!session || session.user.role !== 'admin') {
+  if (!session || session.user.role !== 'SUPER_ADMIN') {
     return {
       success: false,
       error: 'Unauthorized: Super Admin access required'
