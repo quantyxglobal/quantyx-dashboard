@@ -130,8 +130,8 @@ export async function getCaseById(
       return null
     }
 
-    // Check access - Admin and Employee can access all, clients only their org
-    if (userRole !== 'admin' && userRole !== 'employee') {
+    // Check access - Admin, Super Admin, and Employee can access all, clients only their org
+    if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN' && userRole !== 'EMPLOYEE') {
       const { data: userData } = await supabase
         .from('users')
         .select('organization_id')
