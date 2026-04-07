@@ -11,8 +11,51 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AlertCircle, CheckCircle, UserPlus } from "lucide-react"
 import { registerUser } from "@/app/actions/register"
+
+// Country and state data
+const COUNTRIES = [
+  { value: 'United States', label: 'United States' },
+  { value: 'Canada', label: 'Canada' },
+  { value: 'United Kingdom', label: 'United Kingdom' },
+  { value: 'Australia', label: 'Australia' },
+  { value: 'India', label: 'India' },
+  { value: 'Other', label: 'Other' }
+]
+
+const STATES_BY_COUNTRY: Record<string, string[]> = {
+  'United States': [
+    'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 
+    'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 
+    'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 
+    'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 
+    'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 
+    'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 
+    'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia', 
+    'Wisconsin', 'Wyoming'
+  ],
+  'Canada': [
+    'Alberta', 'British Columbia', 'Manitoba', 'New Brunswick', 'Newfoundland and Labrador',
+    'Northwest Territories', 'Nova Scotia', 'Nunavut', 'Ontario', 'Prince Edward Island',
+    'Quebec', 'Saskatchewan', 'Yukon'
+  ],
+  'Australia': [
+    'Australian Capital Territory', 'New South Wales', 'Northern Territory', 'Queensland',
+    'South Australia', 'Tasmania', 'Victoria', 'Western Australia'
+  ],
+  'India': [
+    'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat',
+    'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh',
+    'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab',
+    'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh',
+    'Uttarakhand', 'West Bengal'
+  ],
+  'United Kingdom': [
+    'England', 'Scotland', 'Wales', 'Northern Ireland'
+  ]
+}
 
 const registrationSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
@@ -37,16 +80,23 @@ export function RegistrationForm() {
   const [firmExistsMessage, setFirmExistsMessage] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [selectedCountry, setSelectedCountry] = useState<string>('')
+  const [selectedState, setSelectedState] = useState<string>('')
 
   const {
     register,
     handleSubmit,
     formState: { errors, touchedFields },
-    watch
+    watch,
+    setValue
   } = useForm<RegistrationFormData>({
     resolver: zodResolver(registrationSchema),
     mode: 'onBlur',
   })
+
+  const availableStates = selectedCountry && STATES_BY_COUNTRY[selectedCountry] 
+    ? STATES_BY_COUNTRY[selectedCountry] 
+    : []
 
   const onSubmit = async (data: RegistrationFormData) => {
     setIsSubmitting(true)
@@ -303,6 +353,38 @@ export function RegistrationForm() {
             </div>
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="country">Country</Label>
+            <Select
+              value={selectedCountry}
+              onValueChange={(value) => {
+                setSelectedCountry(value)
+                setValue('country', value, { shouldValidate: true })
+                // Reset state when country changes
+                setSelectedState('')
+                setValue('state', '', { shouldValidate: false })
+              }}
+              disabled={isSubmitting}
+            >
+              <SelectTrigger className={errors.country ? 'border-destructive' : touchedFields.country && !errors.country ? 'border-green-500' : 'bg-[hsl(240_20%_98%)]/50 border-[hsl(240_15%_88%)]'}>
+                <SelectValue placeholder="Select country" />
+              </SelectTrigger>
+              <SelectContent>
+                {COUNTRIES.map((country) => (
+                  <SelectItem key={country.value} value={country.value}>
+                    {country.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.country && (
+              <div className="flex items-center gap-1 text-sm text-destructive">
+                <AlertCircle className="h-3 w-3" />
+                <span>{errors.country.message}</span>
+              </div>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="city">City</Label>
@@ -331,56 +413,62 @@ export function RegistrationForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="state">State</Label>
-              <div className="relative">
-                <Input
-                  id="state"
-                  type="text"
-                  placeholder="NY"
-                  {...register("state")}
-                  className={errors.state ? 'border-destructive focus-visible:ring-destructive' : touchedFields.state && !errors.state ? 'border-green-500' : 'bg-[hsl(240_20%_98%)]/50 border-[hsl(240_15%_88%)] hover:border-primary/50 transition-colors'}
-                  disabled={isSubmitting}
-                />
-                {touchedFields.state && !errors.state && (
-                  <CheckCircle className="absolute right-3 top-3 h-4 w-4 text-green-600" />
-                )}
-                {errors.state && (
-                  <AlertCircle className="absolute right-3 top-3 h-4 w-4 text-destructive" />
-                )}
-              </div>
-              {errors.state && (
-                <div className="flex items-center gap-1 text-sm text-destructive">
-                  <AlertCircle className="h-3 w-3" />
-                  <span>{errors.state.message}</span>
-                </div>
+              <Label htmlFor="state">State/Province</Label>
+              {availableStates.length > 0 ? (
+                <>
+                  <Select
+                    value={selectedState}
+                    onValueChange={(value) => {
+                      setSelectedState(value)
+                      setValue('state', value, { shouldValidate: true })
+                    }}
+                    disabled={isSubmitting || !selectedCountry}
+                  >
+                    <SelectTrigger className={errors.state ? 'border-destructive' : touchedFields.state && !errors.state ? 'border-green-500' : 'bg-[hsl(240_20%_98%)]/50 border-[hsl(240_15%_88%)]'}>
+                      <SelectValue placeholder="Select state" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableStates.map((state) => (
+                        <SelectItem key={state} value={state}>
+                          {state}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.state && (
+                    <div className="flex items-center gap-1 text-sm text-destructive">
+                      <AlertCircle className="h-3 w-3" />
+                      <span>{errors.state.message}</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="relative">
+                    <Input
+                      id="state"
+                      type="text"
+                      placeholder={selectedCountry ? "Enter state/province" : "Select country first"}
+                      {...register("state")}
+                      className={errors.state ? 'border-destructive focus-visible:ring-destructive' : touchedFields.state && !errors.state ? 'border-green-500' : 'bg-[hsl(240_20%_98%)]/50 border-[hsl(240_15%_88%)] hover:border-primary/50 transition-colors'}
+                      disabled={isSubmitting || !selectedCountry}
+                    />
+                    {touchedFields.state && !errors.state && (
+                      <CheckCircle className="absolute right-3 top-3 h-4 w-4 text-green-600" />
+                    )}
+                    {errors.state && (
+                      <AlertCircle className="absolute right-3 top-3 h-4 w-4 text-destructive" />
+                    )}
+                  </div>
+                  {errors.state && (
+                    <div className="flex items-center gap-1 text-sm text-destructive">
+                      <AlertCircle className="h-3 w-3" />
+                      <span>{errors.state.message}</span>
+                    </div>
+                  )}
+                </>
               )}
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="country">Country</Label>
-            <div className="relative">
-              <Input
-                id="country"
-                type="text"
-                placeholder="United States"
-                {...register("country")}
-                className={errors.country ? 'border-destructive focus-visible:ring-destructive' : touchedFields.country && !errors.country ? 'border-green-500' : 'bg-[hsl(240_20%_98%)]/50 border-[hsl(240_15%_88%)] hover:border-primary/50 transition-colors'}
-                disabled={isSubmitting}
-              />
-              {touchedFields.country && !errors.country && (
-                <CheckCircle className="absolute right-3 top-3 h-4 w-4 text-green-600" />
-              )}
-              {errors.country && (
-                <AlertCircle className="absolute right-3 top-3 h-4 w-4 text-destructive" />
-              )}
-            </div>
-            {errors.country && (
-              <div className="flex items-center gap-1 text-sm text-destructive">
-                <AlertCircle className="h-3 w-3" />
-                <span>{errors.country.message}</span>
-              </div>
-            )}
           </div>
 
           <div className="space-y-2">
