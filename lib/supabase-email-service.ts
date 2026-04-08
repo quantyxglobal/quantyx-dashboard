@@ -127,7 +127,8 @@ View case: ${process.env.NEXTAUTH_URL}/admin/case/${caseData.id}
 
       const organization = caseData.organization as any
 
-      const template = {
+      // Admin notification template
+      const adminTemplate = {
         subject: `Case Status Updated: ${caseData.case_number} - ${oldStatus} → ${newStatus}`,
         htmlBody: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -165,15 +166,73 @@ View case: ${process.env.NEXTAUTH_URL}/admin/case/${caseData.id}
         `.trim(),
       }
 
-      const result = await postmarkEmailService.sendEmail({
+      // Send to admin/support
+      const adminResult = await postmarkEmailService.sendEmail({
         to: this.getNotificationEmails().caseNotifications,
-        subject: template.subject,
-        htmlBody: template.htmlBody,
-        textBody: template.textBody,
+        subject: adminTemplate.subject,
+        htmlBody: adminTemplate.htmlBody,
+        textBody: adminTemplate.textBody,
         emailType: 'case_update',
       })
 
-      return result
+      // Client notification template (more user-friendly)
+      if (caseData.client_email) {
+        const clientTemplate = {
+          subject: `Case Update: ${caseData.case_number} - Status Changed to ${newStatus}`,
+          htmlBody: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #262083;">Your Case Status Has Been Updated</h2>
+              <p>Dear ${caseData.client_name},</p>
+              <p>We wanted to inform you that your case status has been updated.</p>
+              <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <p><strong>Case Number:</strong> ${caseData.case_number}</p>
+                <p><strong>Case Title:</strong> ${caseData.title}</p>
+                <p><strong>New Status:</strong> 
+                  <span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;">${newStatus}</span>
+                </p>
+                <p><strong>Updated:</strong> ${new Date().toLocaleString()}</p>
+              </div>
+              <p>You can view your case details by logging into your dashboard.</p>
+              <p style="margin: 20px 0;">
+                <a href="${process.env.NEXTAUTH_URL}/dashboard/case/${caseData.id}" style="background-color: #262083; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">View Case</a>
+              </p>
+              <p>If you have any questions, please don't hesitate to contact us.</p>
+              <p>Best regards,<br>The Quantix Global Team</p>
+            </div>
+          `,
+          textBody: `
+Your Case Status Has Been Updated
+
+Dear ${caseData.client_name},
+
+We wanted to inform you that your case status has been updated.
+
+Case Number: ${caseData.case_number}
+Case Title: ${caseData.title}
+New Status: ${newStatus}
+Updated: ${new Date().toLocaleString()}
+
+You can view your case details by logging into your dashboard:
+${process.env.NEXTAUTH_URL}/dashboard/case/${caseData.id}
+
+If you have any questions, please don't hesitate to contact us.
+
+Best regards,
+The Quantix Global Team
+          `.trim(),
+        }
+
+        // Send to client
+        await postmarkEmailService.sendEmail({
+          to: caseData.client_email,
+          subject: clientTemplate.subject,
+          htmlBody: clientTemplate.htmlBody,
+          textBody: clientTemplate.textBody,
+          emailType: 'case_update',
+        })
+      }
+
+      return adminResult
     } catch (error) {
       console.error('Error sending case status update notification:', error)
       return {

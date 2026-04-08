@@ -142,7 +142,7 @@ Submitted at: ${new Date().toLocaleString()}
       const userEmailHtml = `
         <h2>Thank you for contacting Quantix Global!</h2>
         <p>Dear ${validatedData.firstName},</p>
-        <p>We have received your message and will get back to you within 24 hours.</p>
+        <p>We have received your message and will get back to you at the earliest.</p>
         <p>Our team of medical-legal experts will review your inquiry and provide you with the information you need.</p>
         <p><strong>Your submission details:</strong></p>
         <ul>
@@ -157,7 +157,7 @@ Thank you for contacting Quantix Global!
 
 Dear ${validatedData.firstName},
 
-We have received your message and will get back to you within 24 hours.
+We have received your message and will get back to you at the earliest.
 
 Your submission details:
 - Services of Interest: ${validatedData.services.length > 0 ? validatedData.services.join(', ') : 'General inquiry'}

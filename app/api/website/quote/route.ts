@@ -161,7 +161,7 @@ Submitted at: ${new Date().toLocaleString()}
         <p>Thank you for your quote request. We have received your documents and will review them carefully.</p>
         <h3>What happens next?</h3>
         <ul>
-          <li>Our medical-legal experts will review your documents within 24-48 hours</li>
+          <li>Our medical-legal experts will review your documents at the earliest</li>
           <li>We will prepare a detailed quotation based on your specific requirements</li>
           <li>You will receive the quote via email along with project timeline information</li>
         </ul>
@@ -182,7 +182,7 @@ Dear ${validatedData.fullName},
 Thank you for your quote request. We have received your documents and will review them carefully.
 
 What happens next:
-- Our medical-legal experts will review your documents within 24-48 hours
+- Our medical-legal experts will review your documents at the earliest
 - We will prepare a detailed quotation based on your specific requirements
 - You will receive the quote via email along with project timeline information
 
