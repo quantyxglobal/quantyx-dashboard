@@ -130,7 +130,7 @@ Submitted at: ${new Date().toLocaleString()}
       `
       
       await postmarkEmailService.sendEmail({
-        to: process.env.POSTMARK_SUPPORT_EMAIL || 'support@quantyxg.com',
+        to: process.env.POSTMARK_CONTACT_EMAIL || 'contact@quantyxg.com',
         subject: `New Contact Form Submission from ${validatedData.firstName} ${validatedData.lastName}`,
         htmlBody: adminEmailHtml,
         textBody: adminEmailText,
@@ -140,7 +140,7 @@ Submitted at: ${new Date().toLocaleString()}
       
       // Confirmation email to user
       const userEmailHtml = `
-        <h2>Thank you for contacting Quantix Global!</h2>
+        <h2>Thank you for contacting Quantyx Global!</h2>
         <p>Dear ${validatedData.firstName},</p>
         <p>We have received your message and will get back to you at the earliest.</p>
         <p>Our team of medical-legal experts will review your inquiry and provide you with the information you need.</p>
@@ -149,11 +149,11 @@ Submitted at: ${new Date().toLocaleString()}
           <li>Services of Interest: ${validatedData.services.length > 0 ? validatedData.services.join(', ') : 'General inquiry'}</li>
         </ul>
         <p>If you have any urgent questions, please don't hesitate to call us at +91 70751 84488.</p>
-        <p>Best regards,<br>The Quantix Global Team</p>
+        <p>Best regards,<br>The Quantyx Global Team</p>
       `
       
       const userEmailText = `
-Thank you for contacting Quantix Global!
+Thank you for contacting Quantyx Global!
 
 Dear ${validatedData.firstName},
 
@@ -165,15 +165,15 @@ Your submission details:
 If you have any urgent questions, please call us at +91 70751 84488.
 
 Best regards,
-The Quantix Global Team
+The Quantyx Global Team
       `
       
       await postmarkEmailService.sendEmail({
         to: validatedData.email,
-        subject: 'Thank you for contacting Quantix Global',
+        subject: 'Thank you for contacting Quantyx Global',
         htmlBody: userEmailHtml,
         textBody: userEmailText,
-        emailType: 'support'
+        emailType: 'contact'
       })
       
       console.log('[CONTACT API] Email notifications sent successfully')

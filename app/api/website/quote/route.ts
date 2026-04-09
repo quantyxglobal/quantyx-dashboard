@@ -146,7 +146,7 @@ Submitted at: ${new Date().toLocaleString()}
       `
       
       await postmarkEmailService.sendEmail({
-        to: process.env.POSTMARK_SUPPORT_EMAIL || 'support@quantyxg.com',
+        to: process.env.POSTMARK_CONTACT_EMAIL || 'contact@quantyxg.com',
         subject: `New Quote Request from ${validatedData.fullName}`,
         htmlBody: adminEmailHtml,
         textBody: adminEmailText,
@@ -170,8 +170,8 @@ Submitted at: ${new Date().toLocaleString()}
           <li>Services Requested: ${validatedData.services.join(', ')}</li>
           <li>Documents Uploaded: ${validatedData.uploadedFiles.length} files</li>
         </ul>
-        <p>If you have any questions, please contact us at ${process.env.POSTMARK_SUPPORT_EMAIL || 'support@quantyxg.com'}</p>
-        <p>Best regards,<br>The Quantix Global Team</p>
+        <p>If you have any questions, please contact us at contact@quantyxg.com</p>
+        <p>Best regards,<br>The Quantyx Global Team</p>
       `
       
       const userEmailText = `
@@ -190,18 +190,18 @@ Your submission summary:
 - Services Requested: ${validatedData.services.join(', ')}
 - Documents Uploaded: ${validatedData.uploadedFiles.length} files
 
-If you have any questions, please contact us at ${process.env.POSTMARK_SUPPORT_EMAIL || 'support@quantyxg.com'}
+If you have any questions, please contact us at contact@quantyxg.com
 
 Best regards,
-The Quantix Global Team
+The Quantyx Global Team
       `
       
       await postmarkEmailService.sendEmail({
         to: validatedData.email,
-        subject: 'Quote Request Received - Quantix Global',
+        subject: 'Quote Request Received - Quantyx Global',
         htmlBody: userEmailHtml,
         textBody: userEmailText,
-        emailType: 'support'
+        emailType: 'contact'
       })
       
       console.log('[QUOTE API] Email notifications sent successfully')

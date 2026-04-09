@@ -17,6 +17,10 @@ export class PostmarkEmailService {
       email: process.env.POSTMARK_SUPPORT_EMAIL || 'support@quantyxg.com',
       name: process.env.POSTMARK_SUPPORT_NAME || 'Quantyx Global Support'
     },
+    contact: {
+      email: process.env.POSTMARK_CONTACT_EMAIL || 'contact@quantyxg.com',
+      name: process.env.POSTMARK_CONTACT_NAME || 'Quantyx Global'
+    },
     noreply: {
       email: process.env.POSTMARK_NOREPLY_EMAIL || 'noreply@quantyxg.com',
       name: process.env.POSTMARK_NOREPLY_NAME || 'Quantyx Global System'
@@ -40,6 +44,8 @@ export class PostmarkEmailService {
     switch (emailType) {
       case 'admin':
         return this.emailConfig.admin
+      case 'contact':
+        return this.emailConfig.contact
       case 'support':
       case 'case_notification':
       case 'case_update':
@@ -147,6 +153,7 @@ export class PostmarkEmailService {
 export type EmailType = 
   | 'admin'           // Administrative emails (admin@quantyxg.com)
   | 'support'         // General support emails (support@quantyxg.com)
+  | 'contact'         // Contact form emails (contact@quantyxg.com)
   | 'case_notification' // Case-related emails (support@quantyxg.com)
   | 'case_update'     // Case status updates (support@quantyxg.com)
   | 'system'          // System notifications (noreply@quantyxg.com)
