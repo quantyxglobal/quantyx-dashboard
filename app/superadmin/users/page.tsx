@@ -26,9 +26,13 @@ export default async function SuperAdminUsersPage() {
   
   // Fetch all organizations for the create account modal and filters
   const organizations = await SupabaseDB.getAllOrganizations()
+  
+  // Include all organizations in the list, but we'll handle the logic in the action
+  // Quantyx Global (is_firm = false) can be selected for ADMIN/EMPLOYEE but won't set organization_id
   const firms = organizations.map(org => ({
     id: org.id,
-    name: org.display_name || org.name
+    name: org.display_name || org.name,
+    isFirm: org.is_firm
   }))
   
   return <SuperAdminUserManagement users={users} firms={firms} />

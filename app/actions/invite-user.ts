@@ -17,7 +17,7 @@ export async function inviteUser(formData: FormData) {
   const session = await auth()
   
   // Only authenticated client users can invite others
-  if (!session || session.user.role !== 'client') {
+  if (!session || session.user.role !== 'CLIENT') {
     return { 
       success: false, 
       error: 'Unauthorized: Client access required' 

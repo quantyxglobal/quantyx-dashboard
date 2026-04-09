@@ -28,6 +28,7 @@ import { toast } from 'sonner'
 interface Firm {
   id: string
   name: string
+  isFirm?: boolean
 }
 
 interface SuperAdminCreateAccountModalProps {
@@ -185,10 +186,10 @@ export function SuperAdminCreateAccountModal({ firms }: SuperAdminCreateAccountM
             </Select>
             <p className="text-xs text-muted-foreground">
               {accountType === 'ADMIN' 
-                ? 'Optional: Assign to an organization or leave as system admin' 
+                ? 'Optional: Assign to a client firm or select Quantyx Global for internal admin' 
                 : accountType === 'EMPLOYEE'
-                ? 'Required: Employee must belong to Quantyx Global organization'
-                : 'Required: Client must belong to an organization'}
+                ? 'Select Quantyx Global for internal employee or a client firm'
+                : 'Required: Client must belong to a client firm'}
             </p>
           </div>
 

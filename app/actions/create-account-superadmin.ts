@@ -82,18 +82,35 @@ export async function createAccountBySuperAdmin(formData: FormData) {
       email: data.email,
     })
 
-    // Validate organization requirement based on account type
-    if (data.accountType === 'CLIENT' && !data.organizationId) {
-      return {
-        success: false,
-        error: 'Client accounts must be assigned to an organization'
-      }
-    }
-
     if (data.accountType === 'EMPLOYEE' && !data.organizationId) {
       return {
         success: false,
-        error: 'Employee accounts must be assigned to Quantyx Global organization'
+        error: 'Employee accounts must be assigned to an organization'
+      }
+    }
+
+    // Internal staff (ADMIN, EMPLOYEE) should NOT have organization_id if they work for Quantyx Global
+    // Only CLIENT accounts must have organization_id
+    let finalOrganizationId: string | null = null
+    
+    if (data.accountType === 'CLIENT') {
+      // Clients MUST have an organization
+      if (!data.organizationId) {
+        return {
+          success: false,
+          error: 'Client accounts must be assigned to an organization'
+        }
+      }
+      finalOrganizationId = data.organizationId
+    } else if (data.accountType === 'ADMIN' || data.accountType === 'EMPLOYEE') {
+      // For ADMIN/EMPLOYEE: only set organization_id if assigned to an actual firm (is_firm = true)
+      // If assigned to Quantyx Global (is_firm = false), leave organization_id as null
+      if (data.organizationId) {
+        const org = await SupabaseDB.getOrganizationById(data.organizationId)
+        if (org && org.is_firm) {
+          finalOrganizationId = data.organizationId
+        }
+        // If org.is_firm is false (Quantyx Global), leave finalOrganizationId as null
       }
     }
 
@@ -139,13 +156,12 @@ export async function createAccountBySuperAdmin(formData: FormData) {
       console.log('[CREATE_ACCOUNT] Using provided password')
     }
 
-    // Create user account
     console.log('[CREATE_ACCOUNT] Creating user with data:', {
       first_name: data.firstName,
       last_name: data.lastName,
       email: data.email.toLowerCase(),
       role: data.accountType,
-      organization_id: data.organizationId || null
+      organization_id: finalOrganizationId
     })
     
     const user = await SupabaseDB.createUser({
@@ -154,7 +170,7 @@ export async function createAccountBySuperAdmin(formData: FormData) {
       email: data.email.toLowerCase(),
       password_hash: passwordHash,
       role: data.accountType,
-      organization_id: data.organizationId || null,
+      organization_id: finalOrganizationId,
       mfa_setup_required: true // Require MFA setup on first login
     })
 
@@ -174,12 +190,12 @@ export async function createAccountBySuperAdmin(formData: FormData) {
       entity_type: 'user',
       entity_id: user.id,
       user_id: user.id,
-      organization_id: data.organizationId || currentUser.organization_id || '',
+      organization_id: finalOrganizationId || currentUser.organization_id || null,
       new_values: {
         account_type: data.accountType,
         email: data.email.toLowerCase(),
         name: `${data.firstName} ${data.lastName}`,
-        organization_id: data.organizationId
+        organization_id: finalOrganizationId
       }
     })
     console.log('[CREATE_ACCOUNT] Audit log created')

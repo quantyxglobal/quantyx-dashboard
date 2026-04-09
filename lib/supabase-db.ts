@@ -1385,22 +1385,51 @@ export class SupabaseDB {
   }
 
   /**
-   * Update a system setting
+   * Update a system setting (creates if doesn't exist)
    */
   static async updateSystemSetting(key: string, value: any, description?: string) {
-    const { data, error } = await this.client
+    // Try to update first
+    const { data: existingData, error: selectError } = await this.client
       .from('system_settings')
-      .update({
-        value: value,
-        description: description,
-        updated_at: new Date().toISOString()
-      })
+      .select('*')
       .eq('key', key)
-      .select()
       .single()
 
-    if (error) throw error
-    return data
+    if (selectError && selectError.code !== 'PGRST116') {
+      // PGRST116 is "not found" error, which is fine
+      throw selectError
+    }
+
+    if (existingData) {
+      // Update existing setting
+      const { data, error } = await this.client
+        .from('system_settings')
+        .update({
+          value: value,
+          description: description,
+          updated_at: new Date().toISOString()
+        })
+        .eq('key', key)
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    } else {
+      // Insert new setting
+      const { data, error } = await this.client
+        .from('system_settings')
+        .insert({
+          key: key,
+          value: value,
+          description: description || `System setting: ${key}`
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    }
   }
 
   /**
