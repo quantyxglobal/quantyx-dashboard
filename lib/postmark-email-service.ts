@@ -11,15 +11,15 @@ export class PostmarkEmailService {
   private readonly emailConfig = {
     admin: {
       email: process.env.POSTMARK_ADMIN_EMAIL || 'admin@quantyxg.com',
-      name: process.env.POSTMARK_ADMIN_NAME || 'Quantix Global Admin'
+      name: process.env.POSTMARK_ADMIN_NAME || 'Quantyx Global Admin'
     },
     support: {
       email: process.env.POSTMARK_SUPPORT_EMAIL || 'support@quantyxg.com',
-      name: process.env.POSTMARK_SUPPORT_NAME || 'Quantix Global Support'
+      name: process.env.POSTMARK_SUPPORT_NAME || 'Quantyx Global Support'
     },
     noreply: {
       email: process.env.POSTMARK_NOREPLY_EMAIL || 'noreply@quantyxg.com',
-      name: process.env.POSTMARK_NOREPLY_NAME || 'Quantix Global System'
+      name: process.env.POSTMARK_NOREPLY_NAME || 'Quantyx Global System'
     }
   }
 

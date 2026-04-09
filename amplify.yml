@@ -19,9 +19,11 @@ frontend:
         - 'echo "AWS_S3_BUCKET_NAME=$AMPLIFY_AWS_S3_BUCKET_NAME" >> .env.production'
         - 'echo "Build-time AMPLIFY_AWS_REGION is $AMPLIFY_AWS_REGION"'
         - 'grep CUSTOM_AWS_REGION .env.production || echo "WARNING not set"'
-        - 'echo "POSTMARK_API_KEY=$POSTMARK_SERVER_TOKEN" >> .env.production'
-        - 'echo "CASE_NOTIFICATION_EMAIL=$POSTMARK_ADMIN_EMAIL" >> .env.production'
-        - 'echo "ACCOUNT_NOTIFICATION_EMAIL=$POSTMARK_SUPPORT_EMAIL" >> .env.production'
+        - 'echo "POSTMARK_SERVER_TOKEN=$POSTMARK_SERVER_TOKEN" >> .env.production'
+        - 'echo "POSTMARK_ADMIN_EMAIL=$POSTMARK_ADMIN_EMAIL" >> .env.production'
+        - 'echo "POSTMARK_SUPPORT_EMAIL=$POSTMARK_SUPPORT_EMAIL" >> .env.production'
+        - 'echo "CASE_NOTIFICATION_EMAIL=$CASE_NOTIFICATION_EMAIL" >> .env.production'
+        - 'echo "ACCOUNT_NOTIFICATION_EMAIL=$ACCOUNT_NOTIFICATION_EMAIL" >> .env.production'
         - npm run build
   artifacts:
     baseDirectory: .next
