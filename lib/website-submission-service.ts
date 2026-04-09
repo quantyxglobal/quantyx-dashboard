@@ -38,6 +38,7 @@ export interface QuoteRequestData {
   email: string
   phone: string
   firmName?: string
+  country: string
   caseDetails?: string
   services: string[]
 }
@@ -48,6 +49,7 @@ export interface ContactInquiryData {
   email: string
   phone: string
   company?: string
+  country: string
   services: string[]
   message: string
 }
@@ -89,6 +91,7 @@ export class WebsiteSubmissionService {
           email: data.email,
           phone: data.phone,
           organization_name: data.firmName || null,
+          country: data.country,
           case_description: data.caseDetails || null,
           status: 'PENDING',
           created_at: now,
@@ -162,6 +165,7 @@ export class WebsiteSubmissionService {
           email: data.email,
           phone: data.phone,
           organization_name: data.company || null,
+          country: data.country,
           services_interest: data.services,
           message: data.message,
           status: 'NEW',
