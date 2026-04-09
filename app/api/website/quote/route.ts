@@ -11,6 +11,7 @@ const quoteFormSchema = z.object({
   email: z.string().email('Valid email is required'),
   phone: z.string().min(1, 'Phone number is required'),
   firmName: z.string().optional(),
+  country: z.string().min(1, 'Country is required'),
   caseDetails: z.string().optional(),
   services: z.array(z.string()).min(1, 'At least one service is required'),
   uploadedFiles: z.array(z.object({
@@ -109,6 +110,7 @@ export async function POST(req: Request) {
             <p><strong>Email:</strong> ${validatedData.email}</p>
             <p><strong>Phone:</strong> ${validatedData.phone}</p>
             <p><strong>Firm:</strong> ${validatedData.firmName || 'Not provided'}</p>
+            <p><strong>Country:</strong> ${validatedData.country}</p>
             <p><strong>Services Requested:</strong> ${validatedData.services.join(', ')}</p>
           </div>
           ${validatedData.caseDetails ? `
@@ -136,6 +138,7 @@ From: ${validatedData.fullName}
 Email: ${validatedData.email}
 Phone: ${validatedData.phone}
 Firm: ${validatedData.firmName || 'Not provided'}
+Country: ${validatedData.country}
 Services: ${validatedData.services.join(', ')}
 ${validatedData.caseDetails ? `\nCase Details:\n${validatedData.caseDetails}\n` : ''}
 Uploaded Files (${validatedData.uploadedFiles.length}):
@@ -154,7 +157,16 @@ Submitted at: ${new Date().toLocaleString()}
         replyTo: validatedData.email
       })
       
-      // Confirmation email to user
+      // Confirmation email to user - phone numbers based on country
+      let phoneNumbers = '+91 70751 84488 (India)';
+      const country = validatedData.country.toLowerCase();
+      
+      if (country.includes('united states') || country.includes('usa') || country.includes('us')) {
+        phoneNumbers = '+91 70751 84488 (India), +1 (512) 931-4563 (USA)';
+      } else if (country.includes('australia')) {
+        phoneNumbers = '+91 70751 84488 (India), +61 452 257 129 (Australia)';
+      }
+      
       const userEmailHtml = `
         <h2>Quote Request Received</h2>
         <p>Dear ${validatedData.fullName},</p>
@@ -170,7 +182,7 @@ Submitted at: ${new Date().toLocaleString()}
           <li>Services Requested: ${validatedData.services.join(', ')}</li>
           <li>Documents Uploaded: ${validatedData.uploadedFiles.length} files</li>
         </ul>
-        <p>If you have any questions, please contact us at contact@quantyxg.com</p>
+        <p>If you have any questions, please contact us at contact@quantyxg.com or call us at ${phoneNumbers}.</p>
         <p>Best regards,<br>The Quantyx Global Team</p>
       `
       
@@ -190,7 +202,7 @@ Your submission summary:
 - Services Requested: ${validatedData.services.join(', ')}
 - Documents Uploaded: ${validatedData.uploadedFiles.length} files
 
-If you have any questions, please contact us at contact@quantyxg.com
+If you have any questions, please contact us at contact@quantyxg.com or call us at ${phoneNumbers}.
 
 Best regards,
 The Quantyx Global Team

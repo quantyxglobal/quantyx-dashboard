@@ -12,6 +12,7 @@ const contactFormSchema = z.object({
   email: z.string().email('Valid email is required'),
   phone: z.string().min(1, 'Phone number is required'),
   company: z.string().min(1, 'Law firm/organization is required'),
+  country: z.string().min(1, 'Country is required'),
   services: z.array(z.string()).default([]),
   message: z.string().optional(),
   uploadedFiles: z.array(z.object({
@@ -93,6 +94,7 @@ export async function POST(req: Request) {
             <p><strong>Email:</strong> ${validatedData.email}</p>
             <p><strong>Phone:</strong> ${validatedData.phone}</p>
             <p><strong>Company:</strong> ${validatedData.company || 'Not provided'}</p>
+            <p><strong>Country:</strong> ${validatedData.country}</p>
             <p><strong>Services Interested:</strong> ${validatedData.services.length > 0 ? validatedData.services.join(', ') : 'None specified'}</p>
           </div>
           ${validatedData.message ? `
@@ -122,6 +124,7 @@ Name: ${validatedData.firstName} ${validatedData.lastName}
 Email: ${validatedData.email}
 Phone: ${validatedData.phone}
 Company: ${validatedData.company || 'Not provided'}
+Country: ${validatedData.country}
 Services Interested: ${validatedData.services.length > 0 ? validatedData.services.join(', ') : 'None specified'}
 ${validatedData.message ? `\nMessage:\n${validatedData.message}\n` : ''}
 ${fileListText ? `\nUploaded Files (${validatedData.uploadedFiles.length}):\n${fileListText}\n` : ''}
@@ -138,7 +141,16 @@ Submitted at: ${new Date().toLocaleString()}
         replyTo: validatedData.email
       })
       
-      // Confirmation email to user
+      // Confirmation email to user - phone numbers based on country
+      let phoneNumbers = '+91 70751 84488 (India)';
+      const country = validatedData.country.toLowerCase();
+      
+      if (country.includes('united states') || country.includes('usa') || country.includes('us')) {
+        phoneNumbers = '+91 70751 84488 (India), +1 (512) 931-4563 (USA)';
+      } else if (country.includes('australia')) {
+        phoneNumbers = '+91 70751 84488 (India), +61 452 257 129 (Australia)';
+      }
+      
       const userEmailHtml = `
         <h2>Thank you for contacting Quantyx Global!</h2>
         <p>Dear ${validatedData.firstName},</p>
@@ -148,7 +160,7 @@ Submitted at: ${new Date().toLocaleString()}
         <ul>
           <li>Services of Interest: ${validatedData.services.length > 0 ? validatedData.services.join(', ') : 'General inquiry'}</li>
         </ul>
-        <p>If you have any urgent questions, please don't hesitate to call us at +91 70751 84488.</p>
+        <p>If you have any urgent questions, please don't hesitate to call us at ${phoneNumbers}.</p>
         <p>Best regards,<br>The Quantyx Global Team</p>
       `
       
@@ -162,7 +174,7 @@ We have received your message and will get back to you at the earliest.
 Your submission details:
 - Services of Interest: ${validatedData.services.length > 0 ? validatedData.services.join(', ') : 'General inquiry'}
 
-If you have any urgent questions, please call us at +91 70751 84488.
+If you have any urgent questions, please call us at ${phoneNumbers}.
 
 Best regards,
 The Quantyx Global Team
