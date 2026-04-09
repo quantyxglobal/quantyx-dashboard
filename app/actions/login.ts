@@ -19,7 +19,7 @@ export async function checkUserMFAStatus(email: string) {
   // Validate email input
   if (!email || typeof email !== 'string') {
     console.error('[CHECK_MFA_STATUS] Invalid email provided:', email)
-    return { error: 'Invalid email address' }
+    return { error: 'Invalid email address', mfaEnabled: false, mfaRequired: false }
   }
   
   try {
@@ -29,7 +29,7 @@ export async function checkUserMFAStatus(email: string) {
     
     if (!user) {
       console.log('[CHECK_MFA_STATUS] User not found, returning error')
-      return { error: 'User not found' }
+      return { error: 'User not found', mfaEnabled: false, mfaRequired: false }
     }
     
     const mfaEnabled = (user as any).mfa_enabled || false
@@ -56,7 +56,12 @@ export async function checkUserMFAStatus(email: string) {
     }
   } catch (error) {
     console.error('[CHECK_MFA_STATUS] Error:', error)
-    return { error: 'Failed to check MFA status' }
+    // Return a valid object instead of just error
+    return { 
+      error: 'Failed to check MFA status', 
+      mfaEnabled: false, 
+      mfaRequired: false 
+    }
   }
 }
 
