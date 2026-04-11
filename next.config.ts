@@ -75,6 +75,43 @@ const nextConfig: NextConfig = {
           { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
         ],
       },
+      // Security headers for all routes
+      {
+        source: '/:path*',
+        headers: [
+          // Prevent clickjacking
+          { key: 'X-Frame-Options', value: 'DENY' },
+          // Prevent MIME type sniffing
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          // Enable XSS protection
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          // Referrer policy
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          // Permissions policy
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()' },
+          // HSTS - Force HTTPS (only in production)
+          ...(process.env.NODE_ENV === 'production' ? [
+            { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains; preload' }
+          ] : []),
+          // Content Security Policy
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Next.js requires unsafe-inline/eval
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: https: blob:",
+              "font-src 'self' data:",
+              "connect-src 'self' https://wghvermnyvppsgshgbmu.supabase.co https://*.amazonaws.com",
+              "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "object-src 'none'",
+              "upgrade-insecure-requests"
+            ].join('; ')
+          }
+        ],
+      },
     ];
   },
   

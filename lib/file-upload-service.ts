@@ -5,8 +5,57 @@ import { FileStorageService, type StorageLocation } from './file-storage-service
 // Enhanced file size limit: 15GB in bytes
 export const MAX_FILE_SIZE = 15 * 1024 * 1024 * 1024 // 15GB
 
-// Allow all file types - no restrictions
-export const ALLOWED_MIME_TYPES = [] as const // Empty array means all types allowed
+// SECURITY FIX: Whitelist allowed file types instead of allowing all
+// Medical and legal document types only
+export const ALLOWED_MIME_TYPES = [
+  // Documents
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-word',
+  'application/rtf',
+  'text/plain',
+  'text/rtf',
+  
+  // Spreadsheets
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/csv',
+  
+  // Images
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/gif',
+  'image/bmp',
+  'image/tiff',
+  'image/webp',
+  
+  // Medical imaging
+  'application/dicom',
+  'application/x-dicom',
+  
+  // Archives (for medical records)
+  'application/zip',
+  'application/x-zip-compressed',
+  'application/x-rar-compressed',
+  'application/x-7z-compressed',
+  
+  // CD/ISO images (for medical records)
+  'application/x-iso9660-image',
+  'application/x-cd-image',
+  
+  // Generic binary (for .img files)
+  'application/octet-stream'
+] as const
+
+// SECURITY: Dangerous file extensions that should NEVER be allowed
+const DANGEROUS_EXTENSIONS = [
+  'exe', 'bat', 'cmd', 'com', 'scr', 'pif', 'vbs', 'js', 'jse', 'wsf', 'wsh',
+  'msi', 'msp', 'scf', 'lnk', 'inf', 'reg', 'dll', 'sys', 'drv', 'cpl',
+  'jar', 'app', 'deb', 'rpm', 'dmg', 'pkg', 'sh', 'bash', 'ps1', 'psm1',
+  'asp', 'aspx', 'php', 'jsp', 'cgi', 'pl', 'py', 'rb', 'go'
+]
 
 // File type categories for better error messages
 export const FILE_TYPE_CATEGORIES = {
@@ -83,14 +132,43 @@ export class FileUploadService {
 
   /**
    * Validates if a file type is allowed
-   * All file types are now allowed - no restrictions
+   * SECURITY FIX: Whitelist approach - only allow specific medical/legal file types
    * @param mimeType - The MIME type of the file
    * @param fileName - The file name (used for extension-based validation)
-   * @returns True (always allows all file types)
+   * @returns True if file type is allowed
    */
   static isValidFileType(mimeType: string, fileName: string): boolean {
-    // Accept all file types
-    return true
+    // First check: Validate file extension for dangerous types
+    const extension = this.getFileExtension(fileName).toLowerCase().replace('.', '')
+    
+    if (DANGEROUS_EXTENSIONS.includes(extension)) {
+      console.warn(`[FILE_UPLOAD_SECURITY] Blocked dangerous file extension: ${extension}`)
+      return false
+    }
+    
+    // Second check: Validate MIME type against whitelist
+    // Special handling for octet-stream (generic binary)
+    if (mimeType === 'application/octet-stream') {
+      // Only allow octet-stream for specific medical file extensions
+      const allowedBinaryExtensions = ['img', 'iso', 'dcm', 'dicom']
+      const isAllowedBinary = allowedBinaryExtensions.includes(extension)
+      
+      if (!isAllowedBinary) {
+        console.warn(`[FILE_UPLOAD_SECURITY] Blocked octet-stream with extension: ${extension}`)
+        return false
+      }
+      
+      return true
+    }
+    
+    // Check if MIME type is in whitelist
+    const isAllowed = ALLOWED_MIME_TYPES.includes(mimeType as any)
+    
+    if (!isAllowed) {
+      console.warn(`[FILE_UPLOAD_SECURITY] Blocked MIME type: ${mimeType} for file: ${fileName}`)
+    }
+    
+    return isAllowed
   }
 
   /**
@@ -173,8 +251,13 @@ export class FileUploadService {
   private static getFileTypeError(mimeType: string, fileName: string): string {
     const extension = this.getFileExtension(fileName).toLowerCase()
     
-    // This should never be called since all file types are allowed
-    return `Invalid file type "${extension || mimeType}". All file types are supported.`
+    // Check if it's a dangerous extension
+    if (DANGEROUS_EXTENSIONS.includes(extension.replace('.', ''))) {
+      return `File type "${extension}" is not allowed for security reasons. Executable and script files are blocked.`
+    }
+    
+    // Generic error for other invalid types
+    return `File type "${extension || mimeType}" is not supported. Allowed types: PDF, DOC, DOCX, XLS, XLSX, images (JPG, PNG, GIF), medical imaging (DICOM), and archives (ZIP, RAR, ISO).`
   }
 
   /**
