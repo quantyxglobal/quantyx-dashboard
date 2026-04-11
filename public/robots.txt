@@ -1,0 +1,17 @@
+User-agent: *
+Disallow: /dashboard
+Disallow: /dashboard/
+Disallow: /admin
+Disallow: /admin/
+Disallow: /superadmin
+Disallow: /superadmin/
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /setup-mfa
+Disallow: /api/
+
+# Block all crawlers from indexing the entire dashboard
+User-agent: *
+Disallow: /
