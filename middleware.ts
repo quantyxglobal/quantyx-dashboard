@@ -80,11 +80,11 @@ export async function middleware(request: NextRequest) {
       actualRole = session.user.role as UserRole
     }
 
-    // Redirect to MFA setup if required (unless already on setup page)
-    if (mfaSetupRequired && pathname !== '/setup-mfa') {
-      console.log('[MIDDLEWARE] MFA setup required, redirecting to /setup-mfa')
-      return NextResponse.redirect(new URL('/setup-mfa', request.url))
-    }
+    // MFA setup is now optional - users can set it up later from settings
+    // if (mfaSetupRequired && pathname !== '/setup-mfa') {
+    //   console.log('[MIDDLEWARE] MFA setup required, redirecting to /setup-mfa')
+    //   return NextResponse.redirect(new URL('/setup-mfa', request.url))
+    // }
 
     console.log('[MIDDLEWARE] User role:', actualRole, 'accessing:', pathname)
 
