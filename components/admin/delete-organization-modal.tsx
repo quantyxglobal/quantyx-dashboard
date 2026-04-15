@@ -50,12 +50,12 @@ export function DeleteOrganizationModal({ organizationId, organizationName, case
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
-          className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20 hover:border-destructive/30"
+          className="hover:bg-destructive/10 hover:text-destructive text-destructive/70"
+          title="Delete Firm"
         >
-          <Trash2 className="h-4 w-4 mr-2" />
-          Delete Firm
+          <Trash2 className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">

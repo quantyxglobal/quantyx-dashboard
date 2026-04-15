@@ -10,6 +10,7 @@ import { Building2, Users, FileText, Search, Plus, UserX, Settings, Trash2, Chev
 import { CreateFirmModal } from './CreateFirmModal'
 import { AssignUserModal } from './AssignUserModal'
 import { DeleteCaseModal } from './delete-case-modal'
+import { DeleteOrganizationModal } from './delete-organization-modal'
 import { EditFirmModal } from './EditFirmModal'
 import { MergeFirmsModal } from './MergeFirmsModal'
 import { MoveClientsModal } from './MoveClientsModal'
@@ -270,6 +271,11 @@ export function SuperAdminFirmManagement({ firms, orphanedUsers }: SuperAdminFir
                       >
                         <GitMerge className="h-4 w-4" />
                       </Button>
+                      <DeleteOrganizationModal
+                        organizationId={firm.id}
+                        organizationName={firm.name}
+                        caseCount={firm._count.cases}
+                      />
                       <CollapsibleTrigger asChild>
                         <Button variant="ghost" size="sm" className="hover:bg-destructive/10">
                           {isExpanded ? (
