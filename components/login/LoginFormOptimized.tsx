@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { AlertCircle, CheckCircle, Clock, Shield } from "lucide-react"
+import { AlertCircle, CheckCircle, Clock, Shield, Eye, EyeOff } from "lucide-react"
 import { loginAction, checkUserMFAStatus, loginWithMFA } from "@/app/actions/login"
 import { toast } from "sonner"
 
@@ -20,6 +20,7 @@ export function LoginForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({ email: '', password: '' })
   const [touched, setTouched] = useState({ email: false, password: false })
+  const [showPassword, setShowPassword] = useState(false)
   
   // MFA state
   const [showMFAInput, setShowMFAInput] = useState(false)
@@ -32,16 +33,24 @@ export function LoginForm() {
     const sessionParam = searchParams.get('session')
     const errorParam = searchParams.get('error')
     
-    // Use setTimeout to avoid synchronous setState in effect
     if (timeoutParam === 'true' || sessionParam === 'expired') {
       setTimeout(() => setSessionTimeout(true), 0)
     }
     if (errorParam === 'credentials' || errorParam === 'CredentialsSignin') {
-      setTimeout(() => setError('Invalid email or password'), 0)
+      setTimeout(() => {
+        setError('Invalid email or password')
+        setIsSubmitting(false) // Re-enable form on credential error
+      }, 0)
     } else if (errorParam === 'validation') {
-      setTimeout(() => setError('Please enter valid credentials'), 0)
+      setTimeout(() => {
+        setError('Please enter valid credentials')
+        setIsSubmitting(false)
+      }, 0)
     } else if (errorParam === 'unknown' || errorParam === 'undefined' || errorParam) {
-      setTimeout(() => setError('An error occurred during login. Please try again.'), 0)
+      setTimeout(() => {
+        setError('An error occurred during login. Please try again.')
+        setIsSubmitting(false)
+      }, 0)
     }
   }, [searchParams])
 
@@ -377,27 +386,30 @@ export function LoginForm() {
               <Input
                 id="password"
                 name="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"
                 value={formData.password}
                 onChange={handleInputChange('password')}
                 onBlur={handleBlur('password')}
                 className={
                   touched.password && !isPasswordValid 
-                    ? 'border-destructive focus-visible:ring-destructive' 
+                    ? 'border-destructive focus-visible:ring-destructive pr-10' 
                     : touched.password && isPasswordValid 
-                    ? 'border-green-500' 
-                    : 'bg-[hsl(240_20%_98%)]/50 border-[hsl(240_15%_88%)] hover:border-primary/50 transition-colors'
+                    ? 'border-green-500 pr-10' 
+                    : 'bg-[hsl(240_20%_98%)]/50 border-[hsl(240_15%_88%)] hover:border-primary/50 transition-colors pr-10'
                 }
                 disabled={isSubmitting}
                 required
               />
-              {touched.password && isPasswordValid && (
-                <CheckCircle className="absolute right-3 top-3 h-4 w-4 text-green-600" />
-              )}
-              {touched.password && !isPasswordValid && (
-                <AlertCircle className="absolute right-3 top-3 h-4 w-4 text-destructive" />
-              )}
+              <button
+                type="button"
+                onClick={() => setShowPassword(prev => !prev)}
+                className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
+                tabIndex={-1}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
             {touched.password && !isPasswordValid && (
               <div className="flex items-center gap-1 text-sm text-destructive">
