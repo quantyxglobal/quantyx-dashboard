@@ -16,7 +16,18 @@ export function LoginForm() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [sessionTimeout, setSessionTimeout] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(() => {
+    // Synchronously read error from URL on first render to avoid flash
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const e = params.get('error')
+      if (e === 'credentials' || e === 'CredentialsSignin') return 'Invalid email or password'
+      if (e === 'validation') return 'Please enter valid credentials'
+      if (e) return 'An error occurred during login. Please try again.'
+    }
+    return null
+  })
+  // Never start in submitting state — if there's an error param the form must be interactive
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({ email: '', password: '' })
   const [touched, setTouched] = useState({ email: false, password: false })
@@ -65,6 +76,8 @@ export function LoginForm() {
 
   const handleInputChange = (field: 'email' | 'password') => (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [field]: e.target.value }))
+    // Clear error when user starts typing again
+    if (error) setError(null)
   }
 
   const handleBlur = (field: 'email' | 'password') => () => {
