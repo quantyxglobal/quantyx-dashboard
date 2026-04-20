@@ -3,6 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // CRITICAL: Use standalone output for proper environment variable handling in AWS Lambda
   output: 'standalone',
+
+  // Remove X-Powered-By header to avoid fingerprinting
+  poweredByHeader: false,
   
   // Inject environment variables at build time for Lambda runtime
   env: {
@@ -88,7 +91,7 @@ const nextConfig: NextConfig = {
           // Referrer policy
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           // Permissions policy
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(), usb=()' },
           // HSTS - Force HTTPS (only in production)
           ...(process.env.NODE_ENV === 'production' ? [
             { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains; preload' }
@@ -98,10 +101,12 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Next.js requires unsafe-inline/eval
+              "script-src 'self' 'unsafe-inline'",   // unsafe-eval removed; Next.js 14 App Router doesn't need it
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
+              "media-src 'self'",
+              "worker-src 'self' blob:",
               "connect-src 'self' https://wghvermnyvppsgshgbmu.supabase.co https://*.amazonaws.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",

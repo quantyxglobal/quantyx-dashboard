@@ -1,0 +1,7 @@
+Contact: mailto:security@quantyxg.com
+Contact: mailto:contact@quantyxg.com
+Expires: 2027-04-14T00:00:00.000Z
+Preferred-Languages: en
+Policy: https://www.quantyxg.com/hipaa-pipeda-compliance
+Acknowledgments: https://www.quantyxg.com/about
+Canonical: https://dashboard.quantyxg.com/.well-known/security.txt
