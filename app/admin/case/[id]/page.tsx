@@ -26,9 +26,10 @@ export default async function AdminCaseDetailPage({
 
   console.log('[ADMIN_CASE] Session role:', session.user.role)
 
-  // Verify admin or employee role
-  if (session.user.role !== 'admin' && session.user.role !== 'employee') {
-    console.log('[ADMIN_CASE] Role check failed - not admin or employee')
+  // Verify admin or employee role (case-insensitive)
+  const roleNormalized = session.user.role?.toLowerCase()
+  if (roleNormalized !== 'admin' && roleNormalized !== 'employee') {
+    console.log('[ADMIN_CASE] Role check failed - not admin or employee, role was:', session.user.role)
     return notFound()
   }
 
@@ -39,7 +40,7 @@ export default async function AdminCaseDetailPage({
   try {
     if (session.user?.id) {
       const currentUser = await SupabaseDB.getUserById(session.user.id) as any
-      isEmployee = currentUser?.role === 'EMPLOYEE'
+      isEmployee = currentUser?.role === 'EMPLOYEE' || currentUser?.role === 'employee'
     }
   } catch (error) {
     console.error('Error fetching user role:', error)
