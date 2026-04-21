@@ -180,9 +180,50 @@ export async function GET(req: Request, ctx: any) {
 export async function POST(req: Request, ctx: any) {
   console.log('[NEXTAUTH_ROUTE] POST request received')
   try {
+    // Rate limit the credentials sign-in endpoint
+    const { checkRateLimit, recordFailedAttempt, getBackoffMs, getClientIp } = await import('@/lib/rate-limit')
+    const ip = getClientIp(req)
+    const limit = checkRateLimit(ip)
+
+    if (!limit.allowed) {
+      return new Response(
+        JSON.stringify({
+          error: limit.isBlocked
+            ? 'Too many failed attempts. Your IP has been temporarily blocked.'
+            : 'Too many requests. Please slow down.',
+          retryAfter: limit.retryAfter,
+        }),
+        {
+          status: 429,
+          headers: {
+            'Content-Type': 'application/json',
+            'Retry-After': String(limit.retryAfter),
+            'X-RateLimit-Limit': '5',
+            'X-RateLimit-Remaining': '0',
+          },
+        }
+      )
+    }
+
+    // Apply exponential backoff for repeat offenders
+    const backoffMs = getBackoffMs(ip)
+    if (backoffMs > 0) {
+      await new Promise(resolve => setTimeout(resolve, backoffMs))
+    }
+
     const config = getAuthConfig()
     const handler = NextAuth(config)
-    return handler.handlers.POST(req, ctx)
+    const response = await handler.handlers.POST(req, ctx)
+
+    // Record failed attempt if NextAuth returned an error (redirect to /login?error=...)
+    if (response instanceof Response) {
+      const location = response.headers.get('location') || ''
+      if (location.includes('error=')) {
+        recordFailedAttempt(ip)
+      }
+    }
+
+    return response
   } catch (error) {
     console.error('[NEXTAUTH_ROUTE] POST handler error:', error)
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
