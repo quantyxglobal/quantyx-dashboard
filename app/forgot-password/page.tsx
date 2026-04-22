@@ -197,7 +197,7 @@ export default function ForgotPasswordPage() {
       <div className="relative z-10 w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-primary-glow to-accent bg-clip-text text-transparent">
-            Quantix Global
+            quantyx Global
           </h1>
           <p className="text-muted-foreground mt-2">
             Password Recovery

@@ -11,8 +11,8 @@ export class MFAService {
   static async generateMFASecret(userId: string, userEmail: string) {
     // Generate secret
     const secret = speakeasy.generateSecret({
-      name: `Quantix Global (${userEmail})`,
-      issuer: 'Quantix Global Med-Legal',
+      name: `quantyx Global (${userEmail})`,
+      issuer: 'quantyx Global Med-Legal',
       length: 32 // 160 bits of entropy
     })
 

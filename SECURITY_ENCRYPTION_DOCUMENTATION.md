@@ -1,5 +1,5 @@
 # Security & Encryption Documentation
-## Quantix Global Med-Legal Dashboard
+## quantyx Global Med-Legal Dashboard
 
 **Document Version**: 1.0  
 **Last Updated**: April 3, 2026  
@@ -20,7 +20,7 @@
 
 ## Overview
 
-The Quantix Global Med-Legal Dashboard implements multiple layers of encryption to protect sensitive medical and legal information throughout its lifecycle. This document details all encryption mechanisms, their implementation stages, and security protocols.
+The quantyx Global Med-Legal Dashboard implements multiple layers of encryption to protect sensitive medical and legal information throughout its lifecycle. This document details all encryption mechanisms, their implementation stages, and security protocols.
 
 ### Security Objectives
 - **Confidentiality**: Protect sensitive data from unauthorized access

@@ -1,4 +1,4 @@
-// Quantix Global Medilegal Services - Prisma Schema
+// quantyx Global Medilegal Services - Prisma Schema
 // Supports both AWS S3 and Supabase PostgreSQL
 // Unified schema for website and dashboard applications
 

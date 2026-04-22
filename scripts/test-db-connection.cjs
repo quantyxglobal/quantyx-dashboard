@@ -18,7 +18,7 @@ async function testConnection() {
     
     // Test finding admin user
     const adminUser = await prisma.user.findUnique({
-      where: { email: 'admin@quantixglobal.com' },
+      where: { email: 'admin@quantyxglobal.com' },
       include: { organization: true }
     })
     

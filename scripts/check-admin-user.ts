@@ -26,7 +26,7 @@ async function checkAdminUser() {
         organization_id,
         organization:organizations(id, name, display_name)
       `)
-      .eq('email', 'admin@quantixglobal.com')
+      .eq('email', 'admin@quantyxglobal.com')
     
     if (error) {
       console.error('❌ Error querying admin user:', error)
@@ -51,7 +51,7 @@ async function checkAdminUser() {
         console.log('   Consider removing duplicates.')
       }
     } else {
-      console.log('❌ No admin user found with email: admin@quantixglobal.com')
+      console.log('❌ No admin user found with email: admin@quantyxglobal.com')
     }
     
   } catch (error) {

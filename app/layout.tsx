@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Secure Dashboard - Quantix Global",
+  title: "Secure Dashboard - quantyx Global",
   description: "Secure multi-role dashboard for case management and file access",
   icons: {
     icon: '/favicon.ico',

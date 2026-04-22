@@ -9,7 +9,7 @@ async function createAdminUser() {
     
     // Check if admin user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email: 'admin@quantixglobal.com' }
+      where: { email: 'admin@quantyxglobal.com' }
     })
     
     if (existingUser) {
@@ -19,18 +19,18 @@ async function createAdminUser() {
     
     // Create or find default organization
     let organization = await prisma.organization.findFirst({
-      where: { name: 'Quantix Global' }
+      where: { name: 'quantyx Global' }
     })
     
     if (!organization) {
       console.log('Creating default organization...')
       organization = await prisma.organization.create({
         data: {
-          name: 'Quantix Global',
-          display_name: 'Quantix Global',
-          slug: 'quantix-global',
-          description: 'Default organization for Quantix Global medilegal services',
-          email: 'admin@quantixglobal.com'
+          name: 'quantyx Global',
+          display_name: 'quantyx Global',
+          slug: 'quantyx-global',
+          description: 'Default organization for quantyx Global medilegal services',
+          email: 'admin@quantyxglobal.com'
         }
       })
       console.log('Organization created:', organization.name)
@@ -43,7 +43,7 @@ async function createAdminUser() {
     // Create admin user
     const adminUser = await prisma.user.create({
       data: {
-        email: 'admin@quantixglobal.com',
+        email: 'admin@quantyxglobal.com',
         first_name: 'Admin',
         last_name: 'User',
         password_hash: passwordHash,

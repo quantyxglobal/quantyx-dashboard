@@ -24,7 +24,7 @@ async function testPostmarkEmail() {
           <p><strong>Test Details:</strong></p>
           <ul>
             <li>Service: Postmark</li>
-            <li>From: Quantix Global Support</li>
+            <li>From: quantyx Global Support</li>
             <li>Timestamp: ${new Date().toLocaleString()}</li>
           </ul>
         </div>
@@ -38,7 +38,7 @@ This is a test email to verify that Postmark email service is working correctly.
 
 Test Details:
 - Service: Postmark
-- From: Quantix Global Support
+- From: quantyx Global Support
 - Timestamp: ${new Date().toLocaleString()}
 
 If you received this email, the Postmark integration is working successfully!

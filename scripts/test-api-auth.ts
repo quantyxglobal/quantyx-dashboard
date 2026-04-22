@@ -14,7 +14,7 @@ async function testApiAuth() {
   try {
     console.log('🔍 Testing API authentication logic...')
     
-    const email = 'admin@quantixglobal.com'
+    const email = 'admin@quantyxglobal.com'
     const password = 'admin123'
     
     console.log('📧 Testing with email:', email)

@@ -197,7 +197,7 @@ View case: ${process.env.NEXTAUTH_URL}/admin/case/${caseData.id}
                 <a href="${process.env.NEXTAUTH_URL}/dashboard/case/${caseData.id}" style="background-color: #262083; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">View Case</a>
               </p>
               <p>If you have any questions, please don't hesitate to contact us.</p>
-              <p>Best regards,<br>The Quantix Global Team</p>
+              <p>Best regards,<br>The quantyx Global Team</p>
             </div>
           `,
           textBody: `
@@ -218,7 +218,7 @@ ${process.env.NEXTAUTH_URL}/dashboard/case/${caseData.id}
 If you have any questions, please don't hesitate to contact us.
 
 Best regards,
-The Quantix Global Team
+The quantyx Global Team
           `.trim(),
         }
 

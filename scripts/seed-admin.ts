@@ -9,7 +9,7 @@ async function seedAdmin() {
     
     // Check if admin user already exists
     const existingAdmin = await prisma.user.findUnique({
-      where: { email: 'admin@quantixglobal.com' }
+      where: { email: 'admin@quantyxglobal.com' }
     })
     
     if (existingAdmin) {
@@ -19,17 +19,17 @@ async function seedAdmin() {
     
     // Create default organization
     let organization = await prisma.organization.findUnique({
-      where: { slug: 'quantix-global' }
+      where: { slug: 'quantyx-global' }
     })
     
     if (!organization) {
       organization = await prisma.organization.create({
         data: {
-          name: 'Quantix Global',
-          display_name: 'Quantix Global Medilegal Services',
-          slug: 'quantix-global',
+          name: 'quantyx Global',
+          display_name: 'quantyx Global Medilegal Services',
+          slug: 'quantyx-global',
           description: 'Professional medilegal services',
-          email: 'admin@quantixglobal.com',
+          email: 'admin@quantyxglobal.com',
           phone: '+91-XXXXXXXXXX',
           country: 'India',
           case_id_prefix: 'QG'
@@ -44,7 +44,7 @@ async function seedAdmin() {
     // Create admin user
     const adminUser = await prisma.user.create({
       data: {
-        email: 'admin@quantixglobal.com',
+        email: 'admin@quantyxglobal.com',
         password_hash: hashedPassword,
         first_name: 'Admin',
         last_name: 'User',
@@ -57,7 +57,7 @@ async function seedAdmin() {
     })
     
     console.log('✅ Created admin user:', adminUser.email)
-    console.log('📧 Email: admin@quantixglobal.com')
+    console.log('📧 Email: admin@quantyxglobal.com')
     console.log('🔑 Password: admin123')
     console.log('⚠️  Please change the password after first login!')
     

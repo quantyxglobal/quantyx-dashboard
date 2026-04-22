@@ -2,7 +2,7 @@ import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 
 /*== AMPLIFY AI CONFIGURATION =============================================
 This schema defines AI-powered conversation and generation routes for the
-Quantix Global medilegal dashboard. It includes:
+quantyx Global medilegal dashboard. It includes:
 - Medical case analysis conversations
 - Document summarization and generation
 - Medical chronology assistance
@@ -13,7 +13,7 @@ const schema = a.schema({
   chat: a
     .conversation({
       aiModel: a.ai.model('Claude 3.5 Sonnet'),
-      systemPrompt: `You are a helpful AI assistant for Quantix Global, a medilegal services company. 
+      systemPrompt: `You are a helpful AI assistant for quantyx Global, a medilegal services company. 
       You help legal professionals analyze medical cases, understand medical terminology, and prepare case documentation.
       You should be professional, accurate, and provide clear explanations of medical concepts.
       When discussing medical cases, always maintain HIPAA compliance and remind users about confidentiality.`,
@@ -24,7 +24,7 @@ const schema = a.schema({
   generateMedicalSummary: a
     .generation({
       aiModel: a.ai.model('Claude 3.5 Sonnet'),
-      systemPrompt: `You are a medical document summarization expert for Quantix Global.
+      systemPrompt: `You are a medical document summarization expert for quantyx Global.
       Generate clear, concise medical summaries from provided medical records.
       Focus on key medical events, diagnoses, treatments, and outcomes.
       Use professional medical terminology while remaining accessible to legal professionals.`,
@@ -44,7 +44,7 @@ const schema = a.schema({
   analyzeMedicalCase: a
     .generation({
       aiModel: a.ai.model('Claude 3.5 Sonnet'),
-      systemPrompt: `You are a medical case analysis expert for Quantix Global.
+      systemPrompt: `You are a medical case analysis expert for quantyx Global.
       Analyze medical cases and provide insights on medical causation, treatment appropriateness, and case strength.
       Identify key medical issues, potential expert witnesses needed, and areas requiring further investigation.`,
     })

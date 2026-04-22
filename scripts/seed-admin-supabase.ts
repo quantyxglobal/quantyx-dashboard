@@ -21,7 +21,7 @@ async function seedAdminUser() {
     const { data: existingAdmin } = await supabase
       .from('users')
       .select('id, email')
-      .eq('email', 'admin@quantixglobal.com')
+      .eq('email', 'admin@quantyxglobal.com')
       .single()
     
     if (existingAdmin) {
@@ -34,7 +34,7 @@ async function seedAdminUser() {
     const { data: existingOrg } = await supabase
       .from('organizations')
       .select('id, name')
-      .eq('slug', 'quantix-global')
+      .eq('slug', 'quantyx-global')
       .single()
     
     if (existingOrg) {
@@ -44,11 +44,11 @@ async function seedAdminUser() {
       const { data: newOrg, error: orgError } = await supabase
         .from('organizations')
         .insert({
-          name: 'Quantix Global',
-          display_name: 'Quantix Global Medilegal Services',
-          slug: 'quantix-global',
+          name: 'quantyx Global',
+          display_name: 'quantyx Global Medilegal Services',
+          slug: 'quantyx-global',
           description: 'Professional medilegal services',
-          email: 'admin@quantixglobal.com',
+          email: 'admin@quantyxglobal.com',
           phone: '+91-XXXXXXXXXX',
           country: 'India',
           case_id_prefix: 'QG'
@@ -72,7 +72,7 @@ async function seedAdminUser() {
     const { data: adminUser, error: userError } = await supabase
       .from('users')
       .insert({
-        email: 'admin@quantixglobal.com',
+        email: 'admin@quantyxglobal.com',
         password_hash: hashedPassword,
         first_name: 'Admin',
         last_name: 'User',
@@ -91,7 +91,7 @@ async function seedAdminUser() {
     }
     
     console.log('✅ Created admin user:', adminUser.email)
-    console.log('📧 Email: admin@quantixglobal.com')
+    console.log('📧 Email: admin@quantyxglobal.com')
     console.log('🔑 Password: admin123')
     console.log('⚠️  Please change the password after first login!')
     

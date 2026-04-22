@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Quantix Global dashboard implements TOTP-based (Time-based One-Time Password) Multi-Factor Authentication with **weekly verification frequency**.
+The quantyx Global dashboard implements TOTP-based (Time-based One-Time Password) Multi-Factor Authentication with **weekly verification frequency**.
 
 ## Key Features
 

@@ -1,5 +1,5 @@
 # Multi-Factor Authentication (MFA) Implementation Guide
-## Free TOTP-Based MFA for Quantix Global Dashboard
+## Free TOTP-Based MFA for quantyx Global Dashboard
 
 **Document Version**: 1.0  
 **Last Updated**: April 3, 2026  
@@ -153,8 +153,8 @@ export class MFAService {
   static async generateMFASecret(userId: string, userEmail: string) {
     // Generate secret
     const secret = speakeasy.generateSecret({
-      name: `Quantix Global (${userEmail})`,
-      issuer: 'Quantix Global Med-Legal',
+      name: `quantyx Global (${userEmail})`,
+      issuer: 'quantyx Global Med-Legal',
       length: 32 // 160 bits of entropy
     })
 
@@ -654,12 +654,12 @@ export default function MFASettingsPage() {
   }
 
   const downloadBackupCodes = () => {
-    const content = `Quantix Global MFA Backup Codes\nGenerated: ${new Date().toLocaleString()}\n\n${backupCodes.join('\n')}\n\nKeep these codes in a safe place. Each code can only be used once.`
+    const content = `quantyx Global MFA Backup Codes\nGenerated: ${new Date().toLocaleString()}\n\n${backupCodes.join('\n')}\n\nKeep these codes in a safe place. Each code can only be used once.`
     const blob = new Blob([content], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'quantix-mfa-backup-codes.txt'
+    a.download = 'quantyx-mfa-backup-codes.txt'
     a.click()
     URL.revokeObjectURL(url)
     toast.success('Backup codes downloaded')

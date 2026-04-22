@@ -125,7 +125,7 @@ export async function POST(req: Request) {
       Metadata: {
         originalName: file.name,
         uploadedAt: new Date().toISOString(),
-        source: 'quantix-website'
+        source: 'quantyx-website'
       }
     })
 

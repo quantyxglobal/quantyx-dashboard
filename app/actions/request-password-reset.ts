@@ -35,7 +35,7 @@ export async function requestPasswordReset(email: string): Promise<{ success: bo
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
               <div style="text-align: center; margin-bottom: 30px;">
                 <h1 style="color: #262083; margin-bottom: 10px;">Password Reset Request</h1>
-                <h2 style="color: #666; font-weight: normal;">Quantix Global Case Management</h2>
+                <h2 style="color: #666; font-weight: normal;">quantyx Global Case Management</h2>
               </div>
               
               <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
@@ -84,13 +84,13 @@ export async function requestPasswordReset(email: string): Promise<{ success: bo
               </div>
 
               <div style="border-top: 1px solid #eee; padding-top: 20px; color: #666; font-size: 12px;">
-                <p>This is an automated notification from Quantix Global Case Management Platform.</p>
+                <p>This is an automated notification from quantyx Global Case Management Platform.</p>
                 <p>Do not reply to this email. Contact the user directly at ${email}</p>
               </div>
             </div>
           `,
           textBody: `
-Password Reset Request - Quantix Global
+Password Reset Request - quantyx Global
 
 USER DETAILS:
 Name: ${user.first_name} ${user.last_name}
@@ -111,7 +111,7 @@ HOW TO RESET PASSWORD:
 6. Send the new password to the user securely
 
 ---
-This is an automated notification from Quantix Global Case Management Platform.
+This is an automated notification from quantyx Global Case Management Platform.
 Do not reply to this email. Contact the user directly at ${email}
           `.trim(),
           emailType: 'admin'
@@ -160,17 +160,17 @@ Do not reply to this email. Contact the user directly at ${email}
     // Send password reset email to super admin
     const emailResult = await awsSESService.sendEmail({
       to: email,
-      subject: 'Password Reset Request - Quantix Global',
+      subject: 'Password Reset Request - quantyx Global',
       htmlBody: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 30px;">
             <h1 style="color: #262083; margin-bottom: 10px;">Password Reset Request</h1>
-            <h2 style="color: #666; font-weight: normal;">Quantix Global Case Management</h2>
+            <h2 style="color: #666; font-weight: normal;">quantyx Global Case Management</h2>
           </div>
           
           <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
             <p>Hello ${user.first_name || 'Super Admin'},</p>
-            <p>We received a request to reset your password for your Quantix Global super administrator account.</p>
+            <p>We received a request to reset your password for your quantyx Global super administrator account.</p>
             <p>If you didn't make this request, you can safely ignore this email.</p>
           </div>
 
@@ -200,16 +200,16 @@ Do not reply to this email. Contact the user directly at ${email}
               <li>Use a strong, unique password</li>
               <li>If you didn't request this reset, contact support immediately</li>
             </ul>
-            <p style="margin-top: 20px;">This is an automated message from Quantix Global Case Management Platform.</p>
+            <p style="margin-top: 20px;">This is an automated message from quantyx Global Case Management Platform.</p>
           </div>
         </div>
       `,
       textBody: `
-Password Reset Request - Quantix Global
+Password Reset Request - quantyx Global
 
 Hello ${user.first_name || 'Super Admin'},
 
-We received a request to reset your password for your Quantix Global super administrator account.
+We received a request to reset your password for your quantyx Global super administrator account.
 
 If you didn't make this request, you can safely ignore this email.
 
@@ -224,7 +224,7 @@ Security Tips:
 - If you didn't request this reset, contact support immediately
 
 ---
-Quantix Global Case Management Platform
+quantyx Global Case Management Platform
       `.trim(),
       emailType: 'admin'
     })
