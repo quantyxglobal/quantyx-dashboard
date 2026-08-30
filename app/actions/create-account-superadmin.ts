@@ -82,36 +82,61 @@ export async function createAccountBySuperAdmin(formData: FormData) {
       email: data.email,
     })
 
-    if (data.accountType === 'EMPLOYEE' && !data.organizationId) {
-      return {
-        success: false,
-        error: 'Employee accounts must be assigned to an organization'
-      }
-    }
-
-    // Internal staff (ADMIN, EMPLOYEE) should NOT have organization_id if they work for Quantyx Global
-    // Only CLIENT accounts must have organization_id
+    // Validate organization assignment based on account type
     let finalOrganizationId: string | null = null
+    let organization = null
     
     if (data.accountType === 'CLIENT') {
-      // Clients MUST have an organization
+      // Clients MUST have an organization (and it must be a law firm)
       if (!data.organizationId) {
         return {
           success: false,
-          error: 'Client accounts must be assigned to an organization'
+          error: 'Client accounts must be assigned to a law firm organization'
         }
       }
+      
+      // Verify the organization exists and is a firm
+      organization = await SupabaseDB.getOrganizationById(data.organizationId)
+      if (!organization) {
+        return {
+          success: false,
+          error: 'Selected organization does not exist'
+        }
+      }
+      
+      if (!organization.is_firm) {
+        return {
+          success: false,
+          error: 'Client accounts must be assigned to a law firm, not the service provider organization'
+        }
+      }
+      
       finalOrganizationId = data.organizationId
     } else if (data.accountType === 'ADMIN' || data.accountType === 'EMPLOYEE') {
-      // For ADMIN/EMPLOYEE: only set organization_id if assigned to an actual firm (is_firm = true)
-      // If assigned to Quantyx Global (is_firm = false), leave organization_id as null
+      // Internal staff (ADMIN/EMPLOYEE) CANNOT be assigned to law firm organizations
+      // They should have organization_id = NULL (work for Quantyx Global directly)
+      // OR assigned to the service provider organization (is_firm = false)
+      
       if (data.organizationId) {
-        const org = await SupabaseDB.getOrganizationById(data.organizationId)
-        if (org && org.is_firm) {
-          finalOrganizationId = data.organizationId
+        organization = await SupabaseDB.getOrganizationById(data.organizationId)
+        if (!organization) {
+          return {
+            success: false,
+            error: 'Selected organization does not exist'
+          }
         }
-        // If org.is_firm is false (Quantyx Global), leave finalOrganizationId as null
+        
+        if (organization.is_firm) {
+          return {
+            success: false,
+            error: 'Internal staff (ADMIN/EMPLOYEE) cannot be assigned to law firm organizations. Leave organization unassigned or select the service provider organization.'
+          }
+        }
+        
+        // Allow assignment to service provider organization (is_firm = false)
+        finalOrganizationId = data.organizationId
       }
+      // If no organization provided, finalOrganizationId remains null (internal staff working for Quantyx Global)
     }
 
     // Check if email already exists
@@ -127,19 +152,11 @@ export async function createAccountBySuperAdmin(formData: FormData) {
     }
     console.log('[CREATE_ACCOUNT] Email is available')
 
-    // Verify organization exists if provided
-    let organization = null
-    if (data.organizationId) {
-      console.log('[CREATE_ACCOUNT] Verifying organization:', data.organizationId)
-      organization = await SupabaseDB.getOrganizationById(data.organizationId)
-      if (!organization) {
-        console.log('[CREATE_ACCOUNT] Organization not found')
-        return {
-          success: false,
-          error: 'Organization not found'
-        }
-      }
-      console.log('[CREATE_ACCOUNT] Organization verified:', organization.name)
+    // Log organization info if assigned
+    if (organization) {
+      console.log('[CREATE_ACCOUNT] Organization verified:', organization.name, '(is_firm:', organization.is_firm, ')')
+    } else {
+      console.log('[CREATE_ACCOUNT] No organization assigned (internal Quantyx Global staff)')
     }
 
     let password: string

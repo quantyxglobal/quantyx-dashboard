@@ -2,6 +2,7 @@
 
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { SupabaseDB } from '@/lib/supabase-db'
 import { logAuditAction } from '@/lib/audit-log'
 import { z } from 'zod'
 import { createEmailService } from '@/lib/email-service-factory'
@@ -48,12 +49,20 @@ export async function createFirm(formData: FormData) {
       }
     }
 
-    // Create organization
+    // Get next firm sequence number
+    const nextFirmNumber = await SupabaseDB.getNextFirmSequence()
+    const firmNumber = nextFirmNumber.toString().padStart(3, '0')
+
+    // Create organization (law firm)
     const organization = await prisma.organization.create({
       data: {
         name: data.name,
         display_name: data.name,
-        slug: data.name.toLowerCase().replace(/\s+/g, '-')
+        slug: data.name.toLowerCase().replace(/\s+/g, '-'),
+        is_firm: true, // All firms created through this action are law firm clients
+        firm_number: firmNumber,
+        firm_created_at: new Date(),
+        firm_case_counter: 0
       }
     })
 

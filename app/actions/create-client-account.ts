@@ -107,6 +107,7 @@ export async function createClientAccount(formData: FormData) {
             name: data.organizationName,
             display_name: data.organizationName,
             slug: data.organizationName.toLowerCase().replace(/\s+/g, '-'),
+            is_firm: true, // Client organizations are always law firms
             address_line1: data.addressLine1 || null,
             address_line2: data.addressLine2 || null,
             city: data.city || null,

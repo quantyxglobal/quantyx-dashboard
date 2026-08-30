@@ -29,6 +29,7 @@ interface Firm {
   id: string
   name: string
   isFirm?: boolean
+  firmNumber?: string
 }
 
 interface SuperAdminCreateAccountModalProps {
@@ -47,10 +48,19 @@ export function SuperAdminCreateAccountModal({ firms }: SuperAdminCreateAccountM
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     
-    // Validate organization selection for CLIENT and EMPLOYEE
-    if ((accountType === 'CLIENT' || accountType === 'EMPLOYEE') && !selectedOrg) {
-      toast.error('Please select an organization')
+    // Validate organization selection for CLIENT
+    if (accountType === 'CLIENT' && !selectedOrg) {
+      toast.error('Client accounts must be assigned to a law firm')
       return
+    }
+    
+    // Prevent ADMIN/EMPLOYEE from being assigned to law firms
+    if ((accountType === 'ADMIN' || accountType === 'EMPLOYEE') && selectedOrg && selectedOrg !== 'none') {
+      const selectedFirm = firms.find(f => f.id === selectedOrg)
+      if (selectedFirm?.isFirm) {
+        toast.error('Internal staff cannot be assigned to law firm organizations')
+        return
+      }
     }
     
     setLoading(true)
@@ -115,6 +125,11 @@ export function SuperAdminCreateAccountModal({ firms }: SuperAdminCreateAccountM
     setLoading(false)
   }
 
+  // Filter organizations based on account type
+  const availableOrganizations = accountType === 'CLIENT' 
+    ? firms.filter(f => f.isFirm === true) // Clients can only be assigned to law firms
+    : firms.filter(f => f.isFirm === false) // Internal staff can only be assigned to service provider
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -162,35 +177,65 @@ export function SuperAdminCreateAccountModal({ firms }: SuperAdminCreateAccountM
 
           <div className="space-y-2">
             <Label htmlFor="organizationId" className="text-sm font-medium">
-              Organization {(accountType === 'CLIENT' || accountType === 'EMPLOYEE') && <span className="text-destructive">*</span>}
+              Organization {accountType === 'CLIENT' && <span className="text-destructive">*</span>}
             </Label>
             <Select 
               name="organizationId" 
               value={selectedOrg}
               onValueChange={setSelectedOrg}
-              required={accountType === 'CLIENT' || accountType === 'EMPLOYEE'}
+              required={accountType === 'CLIENT'}
             >
               <SelectTrigger className="transition-all focus:ring-2 focus:ring-destructive">
-                <SelectValue placeholder="Select organization" />
+                <SelectValue placeholder={
+                  accountType === 'CLIENT' 
+                    ? "Select law firm" 
+                    : "Select organization (optional)"
+                } />
               </SelectTrigger>
               <SelectContent>
-                {accountType === 'ADMIN' && (
-                  <SelectItem value="none">No Organization (System Admin)</SelectItem>
+                {(accountType === 'ADMIN' || accountType === 'EMPLOYEE') && (
+                  <SelectItem value="none">
+                    <div className="flex items-center gap-2">
+                      <span>No Organization</span>
+                      <span className="text-xs text-muted-foreground">(Quantyx Global internal staff)</span>
+                    </div>
+                  </SelectItem>
                 )}
-                {firms.map((firm) => (
+                {availableOrganizations.length === 0 && accountType === 'CLIENT' && (
+                  <div className="px-2 py-3 text-sm text-muted-foreground">
+                    No law firms available. Create a firm first.
+                  </div>
+                )}
+                {availableOrganizations.map((firm) => (
                   <SelectItem key={firm.id} value={firm.id}>
-                    {firm.name}
+                    <div className="flex items-center gap-2">
+                      <span>{firm.name}</span>
+                      {firm.firmNumber && (
+                        <span className="text-xs text-muted-foreground">#{firm.firmNumber}</span>
+                      )}
+                      {!firm.isFirm && (
+                        <span className="text-xs text-muted-foreground">(Service Provider)</span>
+                      )}
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">
-              {accountType === 'ADMIN' 
-                ? 'Optional: Assign to a client firm or select Quantyx Global for internal admin' 
-                : accountType === 'EMPLOYEE'
-                ? 'Select Quantyx Global for internal employee or a client firm'
-                : 'Required: Client must belong to a client firm'}
-            </p>
+            {accountType === 'CLIENT' && (
+              <p className="text-xs text-muted-foreground">
+                <span className="text-destructive">Required:</span> Clients must be assigned to a law firm organization
+              </p>
+            )}
+            {accountType === 'ADMIN' && (
+              <p className="text-xs text-muted-foreground">
+                <span className="text-primary">Optional:</span> Leave unassigned for internal Quantyx Global admin, or select service provider org
+              </p>
+            )}
+            {accountType === 'EMPLOYEE' && (
+              <p className="text-xs text-muted-foreground">
+                <span className="text-primary">Optional:</span> Leave unassigned for internal Quantyx Global employee, or select service provider org
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -290,10 +335,16 @@ export function SuperAdminCreateAccountModal({ firms }: SuperAdminCreateAccountM
           <div className="bg-destructive/5 p-4 rounded-lg border border-destructive/20">
             <h4 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
               <Shield className="h-4 w-4 text-destructive" />
-              Account Setup
+              Account Setup Summary
             </h4>
             <ul className="text-sm text-muted-foreground space-y-1">
               <li>• Account type: {accountType === 'ADMIN' ? 'Administrator' : accountType === 'EMPLOYEE' ? 'Employee' : 'Client'}</li>
+              {accountType === 'CLIENT' && (
+                <li className="text-destructive">• Must be assigned to a law firm organization</li>
+              )}
+              {(accountType === 'ADMIN' || accountType === 'EMPLOYEE') && (
+                <li className="text-primary">• Can be unassigned (internal Quantyx Global staff)</li>
+              )}
               {useAutoPassword ? (
                 <>
                   <li>• A secure password will be auto-generated</li>
@@ -306,7 +357,7 @@ export function SuperAdminCreateAccountModal({ firms }: SuperAdminCreateAccountM
                 </>
               )}
               <li>• User can change their password after first login</li>
-              <li>• Account will be created immediately</li>
+              <li>• MFA setup required on first login</li>
             </ul>
           </div>
 

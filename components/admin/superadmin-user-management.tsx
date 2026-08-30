@@ -28,6 +28,7 @@ interface User {
 interface Firm {
   id: string
   name: string
+  isFirm?: boolean
 }
 
 interface SuperAdminUserManagementProps {
