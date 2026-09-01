@@ -1035,7 +1035,7 @@ export class SupabaseDB {
         id: generateUUID(),
         ...file,
         s3_bucket: process.env.AWS_S3_BUCKET_NAME || 'quantyx-medilegal-files',
-        s3_region: process.env.AWS_REGION || 'us-east-1',
+        s3_region: process.env.CUSTOM_AWS_REGION || process.env.AWS_REGION || 'ap-south-2',
         category: 'OTHER' as FileCategory,
         created_at: new Date().toISOString()
       })))
