@@ -9,8 +9,14 @@ import { createEmailService } from '@/lib/email-service-factory'
 
 const createFirmSchema = z.object({
   name: z.string().min(2, 'Firm name must be at least 2 characters'),
-  adminName: z.string().min(2, 'Admin name must be at least 2 characters').optional(),
-  adminEmail: z.string().email('Invalid admin email address').optional(),
+  adminName: z.preprocess(
+    (val) => (val === null || val === '' ? undefined : val),
+    z.string().min(2, 'Admin name must be at least 2 characters').optional()
+  ),
+  adminEmail: z.preprocess(
+    (val) => (val === null || val === '' ? undefined : val),
+    z.string().email('Invalid admin email address').optional()
+  ),
 })
 
 export async function createFirm(formData: FormData) {
