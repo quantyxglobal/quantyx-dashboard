@@ -1,0 +1,9 @@
+runConfig:
+  runCommand: "npm start"
+
+env:
+  - variable: NODE_VERSION
+    value: "22"
+    availability:
+      - BUILD
+      - RUNTIME
