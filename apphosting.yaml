@@ -1,6 +1,10 @@
 runConfig:
-  runCommand: "npm start"
-
+  runtime: nodejs22
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
+  minInstances: 0
+  maxInstances: 10
 env:
   - variable: NODE_VERSION
     value: "22"
