@@ -65,15 +65,11 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@aws-amplify/backend": "^1.22.0",
-    "@aws-amplify/backend-cli": "^1.8.2",
     "@types/node": "^20.19.37",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitest/ui": "^4.1.1",
     "autoprefixer": "^10.4.27",
-    "aws-cdk-lib": "^2.234.1",
-    "constructs": "^10.6.0",
     "dotenv": "^17.3.1",
     "esbuild": "^0.28.0",
     "eslint": "^9",
