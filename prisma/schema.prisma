@@ -234,7 +234,6 @@ model User {
   case_comments         CaseComment[]
   case_status_changes   CaseStatusHistory[]
   managed_team          Team?               @relation("TeamManager")
-  team_members          User[]              @relation("TeamMembers")
   assignments_made      CaseAssignmentHistory[] @relation("AssignedBy")
   assignments_received  CaseAssignmentHistory[] @relation("AssignedTo")
   
