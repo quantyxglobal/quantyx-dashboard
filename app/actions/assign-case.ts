@@ -73,10 +73,47 @@ export async function assignCaseToEmployees(caseId: string, employeeIds: string[
 
     console.log('[ASSIGN_CASE] Updating case assignments')
     
+    // Get current assignments to determine what changed
+    const toAdd = employeeIds.filter(id => !oldEmployeeIds.includes(id))
+    const toRemove = oldEmployeeIds.filter(id => !employeeIds.includes(id))
+    
     // Update the case assignments using the new junction table
     await SupabaseDB.updateCaseAssignments(caseId, employeeIds, session.user.id)
     
     console.log('[ASSIGN_CASE] Assignments updated successfully')
+
+    // Track assignment history
+    const supabase = getSupabaseClient()
+    
+    // Log unassignments
+    if (toRemove.length > 0) {
+      const unassignRecords = toRemove.map(userId => ({
+        case_id: caseId,
+        assigned_by_id: session.user.id,
+        assigned_to_id: userId,
+        action: 'unassigned',
+        metadata: { case_number: caseData.case_number }
+      }))
+      
+      await supabase.from('case_assignment_history').insert(unassignRecords)
+      console.log('[ASSIGN_CASE] Logged', toRemove.length, 'unassignments')
+    }
+    
+    // Log new assignments
+    if (toAdd.length > 0) {
+      const assignRecords = toAdd.map(userId => ({
+        case_id: caseId,
+        assigned_by_id: session.user.id,
+        assigned_to_id: userId,
+        action: 'assigned',
+        metadata: { case_number: caseData.case_number }
+      }))
+      
+      await supabase.from('case_assignment_history').insert(assignRecords)
+      console.log('[ASSIGN_CASE] Logged', toAdd.length, 'new assignments')
+    }
+    
+    console.log('[ASSIGN_CASE] Assignment history tracked')
 
     // Create audit log
     await SupabaseDB.createAuditLog({

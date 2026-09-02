@@ -41,7 +41,7 @@ export function SuperAdminCreateAccountModal({ firms }: SuperAdminCreateAccountM
   const [loading, setLoading] = useState(false)
   const [useAutoPassword, setUseAutoPassword] = useState(true)
   const [sendWelcomeEmail, setSendWelcomeEmail] = useState(true)
-  const [accountType, setAccountType] = useState<'ADMIN' | 'CLIENT' | 'EMPLOYEE'>('CLIENT')
+  const [accountType, setAccountType] = useState<'ADMIN' | 'MANAGER' | 'CLIENT' | 'EMPLOYEE'>('CLIENT')
   const [selectedOrg, setSelectedOrg] = useState<string>('')
   const router = useRouter()
 
@@ -54,8 +54,8 @@ export function SuperAdminCreateAccountModal({ firms }: SuperAdminCreateAccountM
       return
     }
     
-    // Prevent ADMIN/EMPLOYEE from being assigned to law firms
-    if ((accountType === 'ADMIN' || accountType === 'EMPLOYEE') && selectedOrg && selectedOrg !== 'none') {
+    // Prevent ADMIN/MANAGER/EMPLOYEE from being assigned to law firms
+    if ((accountType === 'ADMIN' || accountType === 'MANAGER' || accountType === 'EMPLOYEE') && selectedOrg && selectedOrg !== 'none') {
       const selectedFirm = firms.find(f => f.id === selectedOrg)
       if (selectedFirm?.isFirm) {
         toast.error('Internal staff cannot be assigned to law firm organizations')
@@ -128,7 +128,7 @@ export function SuperAdminCreateAccountModal({ firms }: SuperAdminCreateAccountM
   // Filter organizations based on account type
   const availableOrganizations = accountType === 'CLIENT' 
     ? firms.filter(f => f.isFirm === true) // Clients can only be assigned to law firms
-    : firms.filter(f => f.isFirm === false) // Internal staff can only be assigned to service provider
+    : firms.filter(f => f.isFirm === false) // Internal staff (ADMIN/MANAGER/EMPLOYEE) can only be assigned to service provider
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -147,7 +147,7 @@ export function SuperAdminCreateAccountModal({ firms }: SuperAdminCreateAccountM
             <div>
               <DialogTitle>Create New Account</DialogTitle>
               <DialogDescription>
-                Create a new admin, employee, or client account with full control
+                Create a new admin, manager, employee, or client account with full control
               </DialogDescription>
             </div>
           </div>
@@ -156,19 +156,22 @@ export function SuperAdminCreateAccountModal({ firms }: SuperAdminCreateAccountM
           <form onSubmit={handleSubmit} className="space-y-4" id="create-account-form">
           <div className="space-y-2">
             <Label htmlFor="accountType" className="text-sm font-medium">Account Type</Label>
-            <Select value={accountType} onValueChange={(value: 'ADMIN' | 'CLIENT' | 'EMPLOYEE') => setAccountType(value)}>
+            <Select value={accountType} onValueChange={(value: 'ADMIN' | 'MANAGER' | 'CLIENT' | 'EMPLOYEE') => setAccountType(value)}>
               <SelectTrigger className="transition-all focus:ring-2 focus:ring-destructive">
                 <SelectValue placeholder="Select account type" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="CLIENT">Client Account</SelectItem>
                 <SelectItem value="ADMIN">Admin Account</SelectItem>
+                <SelectItem value="MANAGER">Manager Account</SelectItem>
                 <SelectItem value="EMPLOYEE">Employee Account</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
               {accountType === 'ADMIN' 
                 ? 'Admin accounts can manage cases and users within their organization' 
+                : accountType === 'MANAGER'
+                ? 'Manager accounts can manage a team and assign cases to their team members'
                 : accountType === 'EMPLOYEE'
                 ? 'Employee accounts can view cases and download files (no password/status changes)'
                 : 'Client accounts can view and create cases'}
@@ -193,7 +196,7 @@ export function SuperAdminCreateAccountModal({ firms }: SuperAdminCreateAccountM
                 } />
               </SelectTrigger>
               <SelectContent>
-                {(accountType === 'ADMIN' || accountType === 'EMPLOYEE') && (
+                {(accountType === 'ADMIN' || accountType === 'MANAGER' || accountType === 'EMPLOYEE') && (
                   <SelectItem value="none">
                     <div className="flex items-center gap-2">
                       <span>No Organization</span>
@@ -229,6 +232,11 @@ export function SuperAdminCreateAccountModal({ firms }: SuperAdminCreateAccountM
             {accountType === 'ADMIN' && (
               <p className="text-xs text-muted-foreground">
                 <span className="text-primary">Optional:</span> Leave unassigned for internal Quantyx Global admin, or select service provider org
+              </p>
+            )}
+            {accountType === 'MANAGER' && (
+              <p className="text-xs text-muted-foreground">
+                <span className="text-primary">Optional:</span> Leave unassigned for internal Quantyx Global manager, or select service provider org
               </p>
             )}
             {accountType === 'EMPLOYEE' && (
@@ -338,11 +346,11 @@ export function SuperAdminCreateAccountModal({ firms }: SuperAdminCreateAccountM
               Account Setup Summary
             </h4>
             <ul className="text-sm text-muted-foreground space-y-1">
-              <li>• Account type: {accountType === 'ADMIN' ? 'Administrator' : accountType === 'EMPLOYEE' ? 'Employee' : 'Client'}</li>
+              <li>• Account type: {accountType === 'ADMIN' ? 'Administrator' : accountType === 'MANAGER' ? 'Manager' : accountType === 'EMPLOYEE' ? 'Employee' : 'Client'}</li>
               {accountType === 'CLIENT' && (
                 <li className="text-destructive">• Must be assigned to a law firm organization</li>
               )}
-              {(accountType === 'ADMIN' || accountType === 'EMPLOYEE') && (
+              {(accountType === 'ADMIN' || accountType === 'MANAGER' || accountType === 'EMPLOYEE') && (
                 <li className="text-primary">• Can be unassigned (internal Quantyx Global staff)</li>
               )}
               {useAutoPassword ? (
@@ -387,7 +395,7 @@ export function SuperAdminCreateAccountModal({ firms }: SuperAdminCreateAccountM
             ) : (
               <>
                 <UserPlus className="h-4 w-4 mr-2" />
-                Create {accountType === 'ADMIN' ? 'Admin' : accountType === 'EMPLOYEE' ? 'Employee' : 'Client'} Account
+                Create {accountType === 'ADMIN' ? 'Admin' : accountType === 'MANAGER' ? 'Manager' : accountType === 'EMPLOYEE' ? 'Employee' : 'Client'} Account
               </>
             )}
           </Button>

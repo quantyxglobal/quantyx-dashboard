@@ -7,7 +7,7 @@ import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 
 const getCreateAccountSchema = () => z.object({
-  accountType: z.enum(['ADMIN', 'CLIENT', 'EMPLOYEE']),
+  accountType: z.enum(['ADMIN', 'MANAGER', 'EMPLOYEE', 'CLIENT']),
   organizationId: z.string().nullable().optional(),
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
   lastName: z.string().min(2, 'Last name must be at least 2 characters'),
@@ -112,8 +112,8 @@ export async function createAccountBySuperAdmin(formData: FormData) {
       }
       
       finalOrganizationId = data.organizationId
-    } else if (data.accountType === 'ADMIN' || data.accountType === 'EMPLOYEE') {
-      // Internal staff (ADMIN/EMPLOYEE) CANNOT be assigned to law firm organizations
+    } else if (data.accountType === 'ADMIN' || data.accountType === 'MANAGER' || data.accountType === 'EMPLOYEE') {
+      // Internal staff (ADMIN/MANAGER/EMPLOYEE) CANNOT be assigned to law firm organizations
       // They should have organization_id = NULL (work for Quantyx Global directly)
       // OR assigned to the service provider organization (is_firm = false)
       
@@ -129,7 +129,7 @@ export async function createAccountBySuperAdmin(formData: FormData) {
         if (organization.is_firm) {
           return {
             success: false,
-            error: 'Internal staff (ADMIN/EMPLOYEE) cannot be assigned to law firm organizations. Leave organization unassigned or select the service provider organization.'
+            error: 'Internal staff (ADMIN/MANAGER/EMPLOYEE) cannot be assigned to law firm organizations. Leave organization unassigned or select the service provider organization.'
           }
         }
         
@@ -250,7 +250,7 @@ export async function createAccountBySuperAdmin(formData: FormData) {
 
     return { 
       success: true, 
-      message: `${data.accountType === 'ADMIN' ? 'Admin' : data.accountType === 'EMPLOYEE' ? 'Employee' : 'Client'} account created successfully for ${data.firstName} ${data.lastName}${!data.password ? '. Login credentials have been generated.' : ''}`,
+      message: `${data.accountType === 'ADMIN' ? 'Admin' : data.accountType === 'MANAGER' ? 'Manager' : data.accountType === 'EMPLOYEE' ? 'Employee' : 'Client'} account created successfully for ${data.firstName} ${data.lastName}${!data.password ? '. Login credentials have been generated.' : ''}`,
       userId: user.id,
       temporaryPassword: !data.password ? password : undefined
     }

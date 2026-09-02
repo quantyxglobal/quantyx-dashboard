@@ -162,7 +162,7 @@ Submitted at: ${new Date().toLocaleString()}
       const country = validatedData.country.toLowerCase();
       
       if (country.includes('united states') || country.includes('usa') || country.includes('us')) {
-        phoneNumbers = '+91 70751 84488 (India), +1 (512) 931-4563 (USA)';
+        phoneNumbers = '+91 70751 84488 (India), +1 816-266-2122 (USA)';
       } else if (country.includes('australia')) {
         phoneNumbers = '+91 70751 84488 (India), +61 452 257 129 (Australia)';
       }

@@ -9,15 +9,39 @@ export async function updateCaseStatus(caseId: string, status: CaseStatus) {
   try {
     const session = await auth()
 
-    // Check if user is admin or super admin
-    if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')) {
+    // Check if user is authenticated
+    if (!session) {
       return { error: 'Access denied', status: 403 }
     }
 
     // Verify actual role from database to ensure proper authorization
     const user = await SupabaseDB.getUserById(session.user.id) as any
-    if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'ADMIN')) {
+    if (!user) {
+      return { error: 'User not found', status: 404 }
+    }
+
+    // Check role-based permissions
+    const userRole = user.role
+    const allowedRoles = ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE']
+    
+    if (!allowedRoles.includes(userRole)) {
       return { error: 'Access denied', status: 403 }
+    }
+
+    // DELIVERED status can only be set by ADMIN or SUPER_ADMIN
+    if (status === 'DELIVERED' && userRole !== 'SUPER_ADMIN' && userRole !== 'ADMIN') {
+      return { 
+        error: 'Only administrators can mark cases as delivered',
+        status: 403 
+      }
+    }
+
+    // For MANAGER and EMPLOYEE, verify they have access to this case
+    if (userRole === 'MANAGER' || userRole === 'EMPLOYEE') {
+      const hasAccess = await SupabaseDB.userHasCaseAccess(session.user.id, caseId)
+      if (!hasAccess) {
+        return { error: 'Access denied: Case not assigned to you', status: 403 }
+      }
     }
 
     // Get old status before update

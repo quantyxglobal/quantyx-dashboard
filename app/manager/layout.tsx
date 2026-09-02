@@ -3,11 +3,11 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { AdminUserDropdown } from '@/components/admin-user-dropdown'
 import { RoutePreloader } from '@/components/route-preloader'
-import { Users, Building2, UsersRound } from 'lucide-react'
+import { Users, Briefcase } from 'lucide-react'
 import { Suspense } from 'react'
 import { getAuthContext } from '@/lib/auth-middleware'
 
-async function AdminLayoutContent({
+async function ManagerLayoutContent({
   children,
 }: {
   children: React.ReactNode
@@ -18,13 +18,10 @@ async function AdminLayoutContent({
     redirect('/login')
   }
   
-  // Verify admin or employee role
-  if (authContext.user.role !== 'ADMIN' && authContext.user.role !== 'EMPLOYEE' && authContext.user.role !== 'SUPER_ADMIN') {
+  // Verify manager role
+  if (authContext.user.role !== 'MANAGER') {
     redirect('/dashboard')
   }
-  
-  const isEmployee = authContext.user.role === 'EMPLOYEE'
-  const isSuperAdmin = authContext.user.role === 'SUPER_ADMIN'
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-muted/50 relative">
@@ -33,69 +30,50 @@ async function AdminLayoutContent({
       <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-primary/10 to-transparent rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-accent/10 to-transparent rounded-full blur-3xl pointer-events-none" />
       
-      {/* Header with navigation and logout */}
+      {/* Header with navigation */}
       <header className="sticky top-0 z-50 backdrop-blur-md bg-card/90 border-b border-border/50 shadow-elegant">
         <div className="container mx-auto flex h-16 sm:h-18 items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-4 sm:gap-6">
-            <Link href="/admin" className="flex items-center hover:opacity-80 transition-all duration-300 group">
+            <Link href="/manager" className="flex items-center hover:opacity-80 transition-all duration-300 group">
               <div>
                 <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
                   Quantyx Global
                 </h1>
-                <p className="text-xs text-muted-foreground hidden sm:block">Case Management</p>
+                <p className="text-xs text-muted-foreground hidden sm:block">Manager Dashboard</p>
               </div>
             </Link>
             
-            {(isSuperAdmin || !isEmployee) && (
-              <nav className="hidden md:flex items-center gap-6">
-                {isSuperAdmin && (
-                  <Link 
-                    href="/admin/users" 
-                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-all duration-300 px-3 py-2 rounded-lg hover:bg-primary/5"
-                  >
-                    <Users className="h-4 w-4" />
-                    User Management
-                  </Link>
-                )}
-                <Link 
-                  href="/admin/teams" 
-                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-all duration-300 px-3 py-2 rounded-lg hover:bg-primary/5"
-                >
-                  <UsersRound className="h-4 w-4" />
-                  Teams
-                </Link>
-                {isSuperAdmin && (
-                  <Link 
-                    href="/admin/firms" 
-                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-all duration-300 px-3 py-2 rounded-lg hover:bg-primary/5"
-                  >
-                    <Building2 className="h-4 w-4" />
-                    Firm Management
-                  </Link>
-                )}
-              </nav>
-            )}
+            <nav className="hidden md:flex items-center gap-6">
+              <Link 
+                href="/manager/cases" 
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-all duration-300 px-3 py-2 rounded-lg hover:bg-primary/5"
+              >
+                <Briefcase className="h-4 w-4" />
+                My Cases
+              </Link>
+              <Link 
+                href="/manager/team" 
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-all duration-300 px-3 py-2 rounded-lg hover:bg-primary/5"
+              >
+                <Users className="h-4 w-4" />
+                My Team
+              </Link>
+            </nav>
           </div>
           
           <div className="flex items-center gap-3 sm:gap-4">
             <AdminUserDropdown 
               userName={`${authContext.user.firstName} ${authContext.user.lastName}`} 
-              userRole={
-                authContext.user.role === 'SUPER_ADMIN' 
-                  ? 'Super Administrator' 
-                  : isEmployee 
-                    ? 'Employee' 
-                    : 'Administrator'
-              }
+              userRole="Manager"
               firmInfo={authContext.organization}
-              isEmployee={isEmployee}
-              isSuperAdmin={isSuperAdmin}
+              isEmployee={false}
+              isSuperAdmin={false}
             />
           </div>
         </div>
       </header>
       
-      {/* Main content with enhanced styling */}
+      {/* Main content */}
       <main className="relative z-10">
         <div className="container mx-auto px-4 py-8 sm:py-12 sm:px-6">
           <div className="max-w-7xl mx-auto">
@@ -104,8 +82,8 @@ async function AdminLayoutContent({
         </div>
       </main>
       
-      {/* Route Preloader - prefetches likely navigation routes */}
-      <RoutePreloader userRole="admin" />
+      {/* Route Preloader */}
+      <RoutePreloader userRole="manager" />
       
       {/* Footer */}
       <footer className="relative z-10 border-t border-border/50 bg-card/50 backdrop-blur-sm mt-16">
@@ -117,7 +95,7 @@ async function AdminLayoutContent({
               </span>
             </div>
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
-              <span>Secure • Administrative • Controlled</span>
+              <span>Manager Portal</span>
             </div>
           </div>
         </div>
@@ -126,7 +104,7 @@ async function AdminLayoutContent({
   )
 }
 
-function AdminLayoutSkeleton() {
+function ManagerLayoutSkeleton() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-muted/50">
       <header className="sticky top-0 z-50 backdrop-blur-md bg-card/90 border-b border-border/50 shadow-elegant">
@@ -147,7 +125,7 @@ function AdminLayoutSkeleton() {
             <div className="animate-pulse space-y-6">
               <div className="h-8 w-64 bg-muted rounded"></div>
               <div className="h-4 w-96 bg-muted rounded"></div>
-              <div className="grid grid-cols-1 md:grid-cols-2 _lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="h-32 bg-muted rounded-lg"></div>
                 ))}
@@ -160,14 +138,14 @@ function AdminLayoutSkeleton() {
   )
 }
 
-export default function AdminLayout({
+export default function ManagerLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   return (
-    <Suspense fallback={<AdminLayoutSkeleton />}>
-      <AdminLayoutContent>{children}</AdminLayoutContent>
+    <Suspense fallback={<ManagerLayoutSkeleton />}>
+      <ManagerLayoutContent>{children}</ManagerLayoutContent>
     </Suspense>
   )
 }

@@ -19,8 +19,10 @@ datasource db {
 enum UserRole {
   SUPER_ADMIN    // System administrator
   ADMIN          // Firm administrator
+  MANAGER        // Team manager
   CLIENT         // Client user
   STAFF          // Internal staff member
+  EMPLOYEE       // Employee working under a manager
 }
 
 enum CaseStatus {
@@ -149,8 +151,37 @@ model Organization {
   services          Service[]
   invitations       UserInvitation[]
   audit_logs        AuditLog[]
+  teams             Team[]
   
   @@map("organizations")
+}
+
+// ============================================================================
+// TEAM MANAGEMENT
+// ============================================================================
+
+model Team {
+  id                String        @id @default(uuid())
+  name              String?       // Optional team name
+  
+  // Manager relationship (one-to-one)
+  manager_id        String        @unique
+  manager           User          @relation("TeamManager", fields: [manager_id], references: [id], onDelete: Restrict)
+  
+  // Organization relationship
+  organization_id   String
+  organization      Organization  @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  created_at        DateTime      @default(now())
+  updated_at        DateTime      @updatedAt
+  
+  // Relations
+  members           User[]        @relation("TeamMembers")
+  
+  @@index([manager_id])
+  @@index([organization_id])
+  @@map("teams")
 }
 
 model User {
@@ -178,6 +209,10 @@ model User {
   organization_id       String?
   organization          Organization?       @relation(fields: [organization_id], references: [id], onDelete: SetNull)
   
+  // Team relationship (for employees under managers)
+  team_id               String?
+  team                  Team?               @relation("TeamMembers", fields: [team_id], references: [id], onDelete: SetNull)
+  
   // Preferences
   preferences           Json                @default("{}")
   notifications         Json                @default("{}")
@@ -198,12 +233,17 @@ model User {
   contact_assignments   ContactInquiry[]    @relation("ContactAssignee")
   case_comments         CaseComment[]
   case_status_changes   CaseStatusHistory[]
+  managed_team          Team?               @relation("TeamManager")
+  team_members          User[]              @relation("TeamMembers")
+  assignments_made      CaseAssignmentHistory[] @relation("AssignedBy")
+  assignments_received  CaseAssignmentHistory[] @relation("AssignedTo")
   
   @@index([email])
   @@index([organization_id])
   @@index([role])
   @@index([is_active])
   @@index([organization_id, role]) // Composite index for firm user queries
+  @@index([team_id]) // Index for team queries
   @@map("users")
 }
 
@@ -305,6 +345,7 @@ model Case {
   files                 File[]
   comments              CaseComment[]
   status_history        CaseStatusHistory[]
+  assignment_history    CaseAssignmentHistory[]
   
   @@index([case_number])
   @@index([status])
@@ -396,6 +437,36 @@ model CaseStatusHistory {
   @@index([case_id])
   @@index([changed_at])
   @@map("case_status_history")
+}
+
+model CaseAssignmentHistory {
+  id                String      @id @default(uuid())
+  case_id           String
+  
+  // Assignment details
+  assigned_by_id    String
+  assigned_by       User        @relation("AssignedBy", fields: [assigned_by_id], references: [id], onDelete: Restrict)
+  
+  assigned_to_id    String
+  assigned_to       User        @relation("AssignedTo", fields: [assigned_to_id], references: [id], onDelete: Restrict)
+  
+  // Action type
+  action            String      // 'assigned', 'unassigned', 'reassigned'
+  
+  // Metadata (can store additional context like role of assigned user, team info, etc.)
+  metadata          Json        @default("{}")
+  
+  // Timestamp
+  assigned_at       DateTime    @default(now())
+  
+  // Relations
+  case              Case        @relation(fields: [case_id], references: [id], onDelete: Cascade)
+  
+  @@index([case_id])
+  @@index([assigned_by_id])
+  @@index([assigned_to_id])
+  @@index([assigned_at])
+  @@map("case_assignment_history")
 }
 
 // ============================================================================

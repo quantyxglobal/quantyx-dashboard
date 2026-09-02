@@ -6,7 +6,7 @@ import { CaseHeader } from '@/components/case-header'
 import { CaseFilesSection } from '@/components/case-files-section'
 import { FileUploadModal } from '@/components/admin/file-upload-modal'
 import { CaseStatusDropdown } from '@/components/admin/case-status-dropdown'
-import { AssignCaseDropdown } from '@/components/admin/assign-case-dropdown'
+import { MultiAssignCase } from '@/components/admin/multi-assign-case'
 import { SpecialInstructionsSection } from '@/components/admin/special-instructions-section'
 import { BillGeneratorModal } from '@/components/admin/bill-generator-modal'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -92,11 +92,19 @@ export default async function AdminCaseDetailPage({
     // Continue without additional uploads data - will fall back to date grouping
   }
 
-  // Fetch case assignments (multiple employees)
-  let assignedEmployeeIds: string[] = []
+  // Fetch case assignments (managers and employees)
+  let caseAssignments: Array<{ user_id: string; role: 'MANAGER' | 'EMPLOYEE' }> = []
   try {
-    const assignments = await SupabaseDB.getCaseAssignments(id)
-    assignedEmployeeIds = assignments.map((a: any) => a.user_id)
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/cases/${id}/assign`, {
+      cache: 'no-store'
+    })
+    if (response.ok) {
+      const data = await response.json()
+      caseAssignments = [
+        ...(data.managers || []).map((m: any) => ({ user_id: m.id, role: 'MANAGER' as const })),
+        ...(data.employees || []).map((e: any) => ({ user_id: e.id, role: 'EMPLOYEE' as const }))
+      ]
+    }
   } catch (error) {
     console.error('[ADMIN_CASE] Error fetching case assignments:', error)
     // Continue without assignments
@@ -126,9 +134,9 @@ export default async function AdminCaseDetailPage({
               </div>
               
               <div className="space-y-2">
-                <AssignCaseDropdown
+                <MultiAssignCase
                   caseId={caseData.id}
-                  currentAssigneeIds={assignedEmployeeIds}
+                  currentAssignments={caseAssignments}
                   organizationId={caseData.organization_id}
                 />
               </div>

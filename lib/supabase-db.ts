@@ -64,11 +64,12 @@ export function resetSupabaseClient() {
 }
 
 // Type definitions for better type safety
-export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'CLIENT' | 'STAFF' | 'EMPLOYEE'
+export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'CLIENT' | 'STAFF' | 'EMPLOYEE'
 export type CaseStatus = 'PENDING' | 'IN_PROGRESS' | 'UNDER_REVIEW' | 'COMPLETED' | 'DELIVERED' | 'ON_HOLD'
 export type CasePriority = 'SUPER_RUSH' | 'EXPEDITE' | 'NORMAL'
 export type FileSource = 'CASE_UPLOAD' | 'ADMIN_UPLOAD' | 'WEBSITE_QUOTE' | 'WEBSITE_CONTACT' | 'ADDITIONAL_REQUEST'
 export type FileCategory = 'MEDICAL_RECORD' | 'LEGAL_DOCUMENT' | 'IMAGE' | 'OTHER'
+export type CaseAssignmentAction = 'assigned' | 'unassigned' | 'reassigned'
 
 /**
  * Optimized Database Operations
@@ -1450,5 +1451,27 @@ export class SupabaseDB {
     await this.updateSystemSetting('next_firm_id', (currentFirmId + 1).toString())
 
     return currentFirmId
+  }
+
+  /**
+   * Check if user has access to a case (assigned to them)
+   */
+  static async userHasCaseAccess(userId: string, caseId: string): Promise<boolean> {
+    const { data, error } = await this.client
+      .from('case_assignments')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('case_id', caseId)
+      .single()
+
+    if (error) {
+      // If error is "no rows found", user doesn't have access
+      if (error.code === 'PGRST116') {
+        return false
+      }
+      throw error
+    }
+
+    return !!data
   }
 }

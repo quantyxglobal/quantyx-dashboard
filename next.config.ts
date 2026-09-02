@@ -41,9 +41,39 @@ const nextConfig: NextConfig = {
     return 'build-' + Date.now()
   },
   
-  // Skip problematic routes during build
+  // Configure redirects
   async redirects() {
-    return []
+    return [
+      // Example: Redirect old URLs to new ones
+      // {
+      //   source: '/old-path',
+      //   destination: '/new-path',
+      //   permanent: true, // 308 permanent redirect
+      // },
+      // Redirect www to non-www
+      // {
+      //   source: '/:path*',
+      //   has: [
+      //     {
+      //       type: 'host',
+      //       value: 'www.dashboard.quantyxg.com',
+      //     },
+      //   ],
+      //   destination: 'https://dashboard.quantyxg.com/:path*',
+      //   permanent: true,
+      // },
+    ]
+  },
+  
+  // Configure rewrites (for proxying or internal routing)
+  async rewrites() {
+    return [
+      // Example: Proxy API requests to another service
+      // {
+      //   source: '/external-api/:path*',
+      //   destination: 'https://api.example.com/:path*',
+      // },
+    ]
   },
   
   // Configure Server Actions body size limit (50MB for large file uploads)

@@ -3,7 +3,7 @@
  * Ensures users always land on the correct dashboard based on their role
  */
 
-export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'EMPLOYEE' | 'CLIENT'
+export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'EMPLOYEE' | 'CLIENT'
 
 /**
  * Get the default dashboard URL for a user role
@@ -14,6 +14,8 @@ export function getDefaultDashboardForRole(role: UserRole): string {
       return '/superadmin'
     case 'ADMIN':
       return '/admin'
+    case 'MANAGER':
+      return '/manager'
     case 'EMPLOYEE':
       return '/admin' // Employees use admin dashboard with restrictions
     case 'CLIENT':
@@ -40,6 +42,11 @@ export function canAccessPath(role: UserRole, pathname: string): boolean {
   // Admin can access admin and their own dashboard
   if (role === 'ADMIN') {
     return pathname.startsWith('/admin') || pathname.startsWith('/dashboard')
+  }
+
+  // Manager can only access manager dashboard
+  if (role === 'MANAGER') {
+    return pathname.startsWith('/manager')
   }
 
   // Employee can only access admin dashboard
@@ -71,6 +78,7 @@ export function isProtectedRoute(pathname: string): boolean {
   return (
     pathname.startsWith('/dashboard') ||
     pathname.startsWith('/admin') ||
+    pathname.startsWith('/manager') ||
     pathname.startsWith('/superadmin')
   )
 }

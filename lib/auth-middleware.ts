@@ -8,7 +8,7 @@ export interface AuthContext {
   user: {
     id: string
     email: string
-    role: 'SUPER_ADMIN' | 'ADMIN' | 'CLIENT' | 'EMPLOYEE'
+    role: 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'CLIENT' | 'EMPLOYEE'
     organizationId?: string
     firmNumber?: string
     firstName: string
@@ -86,7 +86,7 @@ export async function getAuthContext(req?: NextRequest): Promise<AuthContext | n
     }
 
     // Map role to ensure consistency with design document
-    const normalizedRole = user.role.toUpperCase() as 'SUPER_ADMIN' | 'ADMIN' | 'CLIENT' | 'EMPLOYEE'
+    const normalizedRole = user.role.toUpperCase() as 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'CLIENT' | 'EMPLOYEE'
 
     return {
       user: {
@@ -131,7 +131,7 @@ export async function getAuthContext(req?: NextRequest): Promise<AuthContext | n
  * Enhanced role-based access control middleware with security logging
  * Validates: Requirements 7.2, 7.4, 7.5, 8.2
  */
-export function requireAuth(allowedRoles?: ('SUPER_ADMIN' | 'ADMIN' | 'CLIENT' | 'EMPLOYEE')[]) {
+export function requireAuth(allowedRoles?: ('SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'CLIENT' | 'EMPLOYEE')[]) {
   return async function(req?: NextRequest): Promise<AuthContext> {
     const { ipAddress, userAgent } = getRequestContext(req)
     const authContext = await getAuthContext(req)
@@ -223,10 +223,10 @@ export function requireAuth(allowedRoles?: ('SUPER_ADMIN' | 'ADMIN' | 'CLIENT' |
  */
 export async function requireFirmAccess(organizationId: string, req?: NextRequest): Promise<AuthContext> {
   const { ipAddress, userAgent } = getRequestContext(req)
-  const authContext = await requireAuth(['SUPER_ADMIN', 'ADMIN', 'CLIENT', 'EMPLOYEE'])(req)
+  const authContext = await requireAuth(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CLIENT', 'EMPLOYEE'])(req)
   
-  // Super admins, admins, and employees have global access
-  if (authContext.user.role === 'SUPER_ADMIN' || authContext.user.role === 'ADMIN' || authContext.user.role === 'EMPLOYEE') {
+  // Super admins, admins, managers, and employees have global access
+  if (authContext.user.role === 'SUPER_ADMIN' || authContext.user.role === 'ADMIN' || authContext.user.role === 'MANAGER' || authContext.user.role === 'EMPLOYEE') {
     return authContext
   }
 
@@ -260,10 +260,10 @@ export async function requireFirmAccess(organizationId: string, req?: NextReques
 
 /**
  * Admin-only access control with security logging
- * Restricts access to super admins, admins, and employees only
+ * Restricts access to super admins, admins, managers, and employees only
  */
 export async function requireAdminAccess(req?: NextRequest): Promise<AuthContext> {
-  return await requireAuth(['SUPER_ADMIN', 'ADMIN', 'EMPLOYEE'])(req)
+  return await requireAuth(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'])(req)
 }
 
 /**
@@ -277,7 +277,7 @@ export async function requireSuperAdminAccess(req?: NextRequest): Promise<AuthCo
 /**
  * Utility function to check if user has specific role
  */
-export function hasRole(authContext: AuthContext, role: 'SUPER_ADMIN' | 'ADMIN' | 'CLIENT' | 'EMPLOYEE'): boolean {
+export function hasRole(authContext: AuthContext, role: 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'CLIENT' | 'EMPLOYEE'): boolean {
   return authContext.user.role === role
 }
 
@@ -285,21 +285,26 @@ export function hasRole(authContext: AuthContext, role: 'SUPER_ADMIN' | 'ADMIN' 
  * Utility function to check if user can manage other users
  */
 export function canManageUsers(authContext: AuthContext): boolean {
-  return authContext.user.role === 'SUPER_ADMIN' || authContext.user.role === 'ADMIN'
+  return authContext.user.role === 'SUPER_ADMIN' || authContext.user.role === 'ADMIN' || authContext.user.role === 'MANAGER'
 }
 
 /**
  * Utility function to check if user can create accounts
  */
-export function canCreateAccounts(authContext: AuthContext, targetRole: 'ADMIN' | 'CLIENT' | 'EMPLOYEE'): boolean {
+export function canCreateAccounts(authContext: AuthContext, targetRole: 'ADMIN' | 'MANAGER' | 'CLIENT' | 'EMPLOYEE'): boolean {
   // Super admin can create any account
   if (authContext.user.role === 'SUPER_ADMIN') {
     return true
   }
   
-  // Admin can create only client accounts
+  // Admin can create manager, client, and employee accounts
   if (authContext.user.role === 'ADMIN') {
-    return targetRole === 'CLIENT'
+    return targetRole === 'MANAGER' || targetRole === 'CLIENT' || targetRole === 'EMPLOYEE'
+  }
+  
+  // Managers cannot create accounts
+  if (authContext.user.role === 'MANAGER') {
+    return false
   }
   
   // Employees cannot create accounts
@@ -313,6 +318,20 @@ export function canCreateAccounts(authContext: AuthContext, targetRole: 'ADMIN' 
   }
   
   return false
+}
+
+/**
+ * Utility function to check if user can assign cases
+ */
+export function canAssignCases(authContext: AuthContext): boolean {
+  return authContext.user.role === 'SUPER_ADMIN' || authContext.user.role === 'ADMIN' || authContext.user.role === 'MANAGER'
+}
+
+/**
+ * Utility function to check if user can change case status to DELIVERED
+ */
+export function canMarkAsDelivered(authContext: AuthContext): boolean {
+  return authContext.user.role === 'SUPER_ADMIN' || authContext.user.role === 'ADMIN'
 }
 
 /**
