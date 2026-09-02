@@ -1,7 +1,6 @@
 'use server'
 
 import { auth } from '@/auth'
-import { prisma } from '@/lib/prisma'
 import { SupabaseDB } from '@/lib/supabase-db'
 import { logAuditAction } from '@/lib/audit-log'
 import { z } from 'zod'
@@ -43,15 +42,8 @@ export async function createFirm(formData: FormData) {
     
     console.log('[CREATE_FIRM] Validated data:', { name: data.name, hasAdminEmail: !!data.adminEmail })
 
-    // Check if organization with this name already exists (case-insensitive)
-    const existingOrganization = await prisma.organization.findFirst({
-      where: { 
-        name: {
-          equals: data.name,
-          mode: 'insensitive'
-        }
-      }
-    })
+    // Check if organization with this name already exists (case-insensitive) using Supabase
+    const existingOrganization = await SupabaseDB.getOrganizationByName(data.name)
 
     if (existingOrganization) {
       console.log('[CREATE_FIRM] Organization already exists:', data.name)
@@ -67,18 +59,16 @@ export async function createFirm(formData: FormData) {
     const firmNumber = nextFirmNumber.toString().padStart(3, '0')
     console.log('[CREATE_FIRM] Assigned firm number:', firmNumber)
 
-    console.log('[CREATE_FIRM] Creating organization in database...')
-    // Create organization (law firm)
-    const organization = await prisma.organization.create({
-      data: {
-        name: data.name,
-        display_name: data.name,
-        slug: data.name.toLowerCase().replace(/\s+/g, '-'),
-        is_firm: true, // All firms created through this action are law firm clients
-        firm_number: firmNumber,
-        firm_created_at: new Date(),
-        firm_case_counter: 0
-      }
+    console.log('[CREATE_FIRM] Creating organization in database using Supabase...')
+    // Create organization (law firm) using Supabase for better reliability
+    const organization = await SupabaseDB.createOrganization({
+      name: data.name,
+      display_name: data.name,
+      slug: data.name.toLowerCase().replace(/\s+/g, '-'),
+      is_firm: true,
+      firm_number: firmNumber,
+      firm_created_at: new Date(),
+      firm_case_counter: 0
     })
     
     console.log('[CREATE_FIRM] Organization created successfully:', organization.id)
@@ -128,9 +118,12 @@ export async function createFirm(formData: FormData) {
     console.error('[CREATE_FIRM] Unexpected error:', error)
     console.error('[CREATE_FIRM] Error stack:', error instanceof Error ? error.stack : 'No stack trace')
     console.error('[CREATE_FIRM] Error details:', JSON.stringify(error, null, 2))
+    
+    // Return more specific error message
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return { 
       success: false, 
-      error: 'Failed to create organization. Please try again.' 
+      error: `Failed to create organization: ${errorMessage}. Please try again.` 
     }
   }
 }

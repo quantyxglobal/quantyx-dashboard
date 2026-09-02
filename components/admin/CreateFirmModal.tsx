@@ -50,18 +50,22 @@ export function CreateFirmModal({ open, onOpenChange, onSuccess }: CreateFirmMod
       const formData = new FormData()
       formData.append('name', data.name)
       
+      console.log('[CreateFirmModal] Submitting firm creation:', data.name)
       const result = await createFirm(formData)
+      console.log('[CreateFirmModal] Result:', result)
       
       if (result.success) {
         toast.success(result.message)
         reset()
         onSuccess()
       } else {
+        console.error('[CreateFirmModal] Error from server:', result.error)
         toast.error(result.error)
       }
     } catch (error: any) {
-      console.error('Create firm error:', error)
-      toast.error('Failed to create firm. Please try again.')
+      console.error('[CreateFirmModal] Exception during firm creation:', error)
+      console.error('[CreateFirmModal] Error stack:', error?.stack)
+      toast.error(`Failed to create firm: ${error?.message || 'Unknown error'}. Please try again.`)
     } finally {
       setIsSubmitting(false)
     }
