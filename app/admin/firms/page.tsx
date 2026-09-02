@@ -21,6 +21,7 @@ export default async function AdminFirmsPage() {
   }
 
   // Get all organizations (firms) with their users and case counts
+  // Exclude Quantyx Global (service provider organization)
   const { data: organizations, error: orgsError } = await supabase
     .from('organizations')
     .select(`
@@ -32,6 +33,7 @@ export default async function AdminFirmsPage() {
       created_at
     `)
     .eq('is_firm', true)
+    .neq('name', 'Quantyx Global')  // Exclude service provider
     .order('created_at', { ascending: false })
 
   if (orgsError) {
