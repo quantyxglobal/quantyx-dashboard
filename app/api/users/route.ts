@@ -21,7 +21,10 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const { role: userRole, organizationId: userOrgId } = session.user as any
+    const { role: userRole, organizationId: userOrgId, organization_id } = session.user as any
+    
+    // Handle both organizationId and organization_id from session
+    const sessionOrgId = userOrgId || organization_id
 
     // Only SUPER_ADMIN and ADMIN can list users
     if (userRole !== 'SUPER_ADMIN' && userRole !== 'ADMIN' && userRole !== 'MANAGER') {
@@ -67,23 +70,31 @@ export async function GET(request: NextRequest) {
 
     // Apply organization filter based on user role
     if (userRole === 'ADMIN') {
-      // ADMIN can only see users in their organization
-      if (!userOrgId) {
-        return NextResponse.json(
-          { error: 'Organization not found' },
-          { status: 400 }
-        )
+      // ADMIN: If they have an org, filter by it; if not, get Quantyx Global users
+      if (sessionOrgId) {
+        query = query.eq('organization_id', sessionOrgId)
+      } else {
+        // Admin without organization - get users from Quantyx Global (is_firm = false)
+        const { data: quantyxOrg } = await supabase
+          .from('organizations')
+          .select('id')
+          .eq('is_firm', false)
+          .limit(1)
+          .single()
+        
+        if (quantyxOrg) {
+          query = query.eq('organization_id', quantyxOrg.id)
+        }
       }
-      query = query.eq('organization_id', userOrgId)
     } else if (userRole === 'MANAGER') {
       // MANAGER can only see users in their organization
-      if (!userOrgId) {
+      if (!sessionOrgId) {
         return NextResponse.json(
           { error: 'Organization not found' },
           { status: 400 }
         )
       }
-      query = query.eq('organization_id', userOrgId)
+      query = query.eq('organization_id', sessionOrgId)
     } else if (organizationIdFilter) {
       // SUPER_ADMIN can filter by organization
       query = query.eq('organization_id', organizationIdFilter)

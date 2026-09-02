@@ -178,15 +178,17 @@ export const authConfig = {
     },
     async session({ session, token }) {
       console.log('[AUTH] Session callback:', { hasSession: !!session, hasToken: !!token, tokenRole: token?.role })
-      // Add role and organization_id to session
+      // Add role and organizationId to session
       if (token && session.user) {
         session.user.id = token.id as string
         // Preserve original role from token (SUPER_ADMIN, ADMIN, EMPLOYEE, CLIENT)
         session.user.role = token.role as 'SUPER_ADMIN' | 'ADMIN' | 'EMPLOYEE' | 'CLIENT'
+        session.user.organizationId = token.organization_id as string | undefined
+        // Also include snake_case for backward compatibility
         session.user.organization_id = token.organization_id as string | undefined
         // Add session start time for client-side timeout handling
         (session as any).sessionStart = token.sessionStart
-        console.log('[AUTH] Session role set to:', session.user.role)
+        console.log('[AUTH] Session role set to:', session.user.role, 'orgId:', session.user.organizationId)
       }
       
       return session
