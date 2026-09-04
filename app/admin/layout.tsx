@@ -74,11 +74,11 @@ async function AdminLayoutContent({
                   </Link>
                 )}
                 <Link 
-                  href="/admin/tools/file-converter" 
+                  href="/admin/tools" 
                   className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-all duration-300 px-3 py-2 rounded-lg hover:bg-primary/5"
                 >
                   <FileSpreadsheet className="h-4 w-4" />
-                  File Converter
+                  Tools
                 </Link>
               </nav>
             )}
