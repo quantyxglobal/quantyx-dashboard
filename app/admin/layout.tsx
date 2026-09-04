@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { AdminUserDropdown } from '@/components/admin-user-dropdown'
 import { RoutePreloader } from '@/components/route-preloader'
-import { Users, Building2, UsersRound } from 'lucide-react'
+import { Users, Building2, UsersRound, FileSpreadsheet } from 'lucide-react'
 import { Suspense } from 'react'
 import { getAuthContext } from '@/lib/auth-middleware'
 
@@ -73,6 +73,13 @@ async function AdminLayoutContent({
                     Firm Management
                   </Link>
                 )}
+                <Link 
+                  href="/admin/tools/file-converter" 
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-all duration-300 px-3 py-2 rounded-lg hover:bg-primary/5"
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                  File Converter
+                </Link>
               </nav>
             )}
           </div>
