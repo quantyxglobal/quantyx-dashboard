@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { createClient } from '@/lib/supabase/server'
+import { getSupabaseClient } from '@/lib/supabase-db'
 import crypto from 'crypto'
 
 /**
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
 
     console.log('[RESET PASSWORD] Super admin resetting password for user:', userId, userEmail)
 
-    const supabase = await createClient()
+    const supabase = getSupabaseClient()
 
     // Verify the user exists
     const { data: userData, error: userError } = await supabase
