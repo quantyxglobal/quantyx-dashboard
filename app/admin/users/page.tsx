@@ -15,11 +15,12 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey)
 export default async function AdminUsersPage() {
   const session = await auth()
   
-  // Requirement 5.2, 3.1: Admin role authorization check with redirect
-  // Note: Auth config converts roles to lowercase, so check for 'admin'
-  if (!session || session.user.role !== 'admin') {
+  // Check for SUPER_ADMIN role
+  if (!session || (session.user.role !== 'SUPER_ADMIN' && session.user.role !== 'super_admin')) {
     redirect('/dashboard')
   }
+  
+  const isSuperAdmin = session.user.role === 'SUPER_ADMIN' || session.user.role === 'super_admin'
   
   // Fetch all users from database with Supabase (include organization relation)
   const { data: users, error } = await supabase
@@ -101,7 +102,9 @@ export default async function AdminUsersPage() {
                   <ResetPasswordModal
                     userId={user.id}
                     userName={`${user.first_name} ${user.last_name}`}
+                    userEmail={user.email}
                     userRole={user.role}
+                    isSuperAdmin={isSuperAdmin}
                   />
                   <DeleteUserModal
                     userId={user.id}
