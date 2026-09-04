@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import xlsx from 'xlsx'
+import * as XLSX from 'xlsx'
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, BorderStyle } from 'docx'
+
+// Configure route for dynamic rendering and longer timeout
+export const dynamic = 'force-dynamic'
+export const maxDuration = 60 // 60 seconds for file processing
 
 /**
  * POST /api/convert/excel-to-word
@@ -58,7 +62,7 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(arrayBuffer)
 
     // Parse Excel file
-    const workbook = xlsx.read(buffer, { type: 'buffer' })
+    const workbook = XLSX.read(buffer, { type: 'buffer' })
     
     if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
       return NextResponse.json(
@@ -80,7 +84,7 @@ export async function POST(request: NextRequest) {
       const worksheet = workbook.Sheets[sheetName]
       
       // Convert sheet to 2D array
-      const data: any[][] = xlsx.utils.sheet_to_json(worksheet, { header: 1 })
+      const data: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
       
       if (data.length === 0) {
         console.log('[FILE CONVERT] Sheet is empty:', sheetName)

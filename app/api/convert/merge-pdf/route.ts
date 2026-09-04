@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { PDFDocument } from 'pdf-lib'
 
+// Configure route for dynamic rendering and longer timeout
+export const dynamic = 'force-dynamic'
+export const maxDuration = 60 // 60 seconds for PDF processing
+
 /**
  * POST /api/convert/merge-pdf
  * Merge multiple PDF files in the exact order they are uploaded
