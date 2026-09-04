@@ -92,12 +92,24 @@ export default function CreateTeamDialog({
 
     try {
       setLoading(true)
+      
+      // Get the selected manager's organization ID
+      const selectedManagerData = managers.find(m => m.id === selectedManager)
+      const organizationId = selectedManagerData?.organization_id
+      
+      console.log('[CREATE_TEAM] Submitting with:', {
+        name: teamName,
+        managerId: selectedManager,
+        organizationId
+      })
+      
       const response = await fetch('/api/teams', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: teamName || undefined,
-          managerId: selectedManager
+          managerId: selectedManager,
+          organizationId
         })
       })
 
