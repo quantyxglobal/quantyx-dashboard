@@ -58,10 +58,20 @@ export async function generateBillPDF(billData: BillData): Promise<Buffer> {
     // Load the template into PizZip
     const zip = new PizZip(content)
 
-    // Create docxtemplater instance
+    // Create docxtemplater instance with paragraph loop module
     const doc = new Docxtemplater(zip, {
       paragraphLoop: true,
       linebreaks: true,
+      // Remove empty paragraphs after loop tags
+      nullGetter: (part) => {
+        if (!part.module) {
+          return ''
+        }
+        if (part.module === 'rawxml') {
+          return ''
+        }
+        return ''
+      },
     })
 
     // Format dates to MM/DD/YY
@@ -96,9 +106,11 @@ export async function generateBillPDF(billData: BillData): Promise<Buffer> {
       caseNumber: billData.caseNumber,
       
       // Line items (services table)
+      // Each service will have BOTH serviceName and description as separate fields
       services: billData.lineItems.map((item, index) => ({
         sNo: (index + 1).toString(),
-        serviceDescription: item.serviceName, // Only service name
+        serviceName: item.serviceName, // Just the service name
+        description: item.description || '', // Just the description (can be empty)
         qtyHours: item.hoursWorked.toFixed(2),
         unitRate: `$${item.ratePerHour.toFixed(2)}/hr`,
         amount: `$${item.subtotal.toFixed(2)}`
@@ -138,6 +150,41 @@ export async function generateBillPDF(billData: BillData): Promise<Buffer> {
       type: 'nodebuffer',
       compression: 'DEFLATE',
     })
+
+    // Post-process to remove empty rows created by loop tags
+    const zipOutput = new PizZip(buffer)
+    const documentXml = zipOutput.file('word/document.xml')?.asText()
+    
+    if (documentXml) {
+      // Remove table rows that are empty (created by loop tags)
+      // Pattern matches: <w:tr>...</w:tr> that contain only whitespace and no actual content
+      let cleanedXml = documentXml
+      
+      // Remove rows that only have empty cells
+      cleanedXml = cleanedXml.replace(
+        /<w:tr[^>]*>[\s\S]*?<w:tc[^>]*>[\s\S]*?<\/w:tc>[\s\S]*?<\/w:tr>/g,
+        (match) => {
+          // Check if the row contains any actual text content
+          const textContent = match.replace(/<[^>]+>/g, '').trim()
+          // If row is empty or only whitespace, remove it
+          if (!textContent || textContent.length === 0) {
+            return ''
+          }
+          return match
+        }
+      )
+      
+      // Update the document with cleaned XML
+      zipOutput.file('word/document.xml', cleanedXml)
+      
+      // Generate final buffer
+      const finalBuffer = zipOutput.generate({
+        type: 'nodebuffer',
+        compression: 'DEFLATE',
+      })
+      
+      return finalBuffer
+    }
 
     return buffer
   } catch (error) {
