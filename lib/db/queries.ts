@@ -212,9 +212,13 @@ export async function canAccessFile(
     .from('files')
     .select(`
       id,
+      case_id,
+      uploaded_by_id,
       case:cases(
         id,
-        organization_id
+        organization_id,
+        owner_id,
+        assigned_to_id
       )
     `)
     .eq('id', fileId)
@@ -222,10 +226,13 @@ export async function canAccessFile(
   
   if (error || !file) return false
   
-  // Admin and Employee can access all files
-  if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' || userRole === 'EMPLOYEE') return true
+  const fileData = file as Record<string, any>
+  const fileCase = fileData.case as Record<string, any>
   
-  // Client can only access files from their own firm's cases
+  // Super Admin can access all files
+  if (userRole === 'SUPER_ADMIN') return true
+  
+  // Get user's organization
   const { data: userData } = await supabase
     .from('users')
     .select('organization_id')
@@ -233,6 +240,37 @@ export async function canAccessFile(
     .single()
   
   const user = userData as Record<string, any> | null
-  const fileCase = (file as Record<string, any>).case as Record<string, any>
-  return user?.organization_id === fileCase.organization_id
+  
+  // Admin can access all files in their organization
+  if (userRole === 'ADMIN' && user?.organization_id === fileCase.organization_id) {
+    return true
+  }
+  
+  // Employee can only access files from their assigned cases
+  if (userRole === 'EMPLOYEE') {
+    // Check if employee is assigned to the case via assigned_to_id
+    if (fileCase.assigned_to_id === userId) return true
+    
+    // Check if employee is assigned via case_assignments table
+    const { data: assignment } = await supabase
+      .from('case_assignments')
+      .select('id')
+      .eq('case_id', fileData.case_id)
+      .eq('user_id', userId)
+      .single()
+    
+    if (assignment) return true
+    
+    // Employee uploaded the file themselves
+    if (fileData.uploaded_by_id === userId) return true
+    
+    return false
+  }
+  
+  // Client can only access files from their own firm's cases
+  if (userRole === 'CLIENT') {
+    return user?.organization_id === fileCase.organization_id
+  }
+  
+  return false
 }

@@ -38,13 +38,13 @@ const formatFileSize = (bytes: number | bigint): string => {
 
 const handleFileDownload = async (fileId: string, filename: string) => {
   try {
-    const response = await fetch(`/api/files/download/${fileId}`)
+    const response = await fetch(`/api/files/${fileId}/download`)
     
     if (!response.ok) {
       throw new Error('Failed to get download URL')
     }
 
-    const { downloadUrl } = await response.json()
+    const { url: downloadUrl } = await response.json()
     
     // Create a temporary link and trigger download
     const link = document.createElement('a')
